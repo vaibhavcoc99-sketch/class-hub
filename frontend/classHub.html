@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassHub - Class Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="classHub.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">CLASSHUB</div>
+            <div class="user-info">
+                <div class="user-avatar">CR</div>
+                <div class="user-details">
+                    <h3>Rahul Sharma</h3>
+                    <div class="user-role">Class Representative - CSE 2nd Year</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav>
+            <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="switchTab('notifications')">
+                🔔 Notifications
+                <span class="badge">3</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('assignments')">📝 Assignments</button>
+            <button class="nav-btn" onclick="switchTab('timetable')">📅 Timetable</button>
+            <button class="nav-btn" onclick="switchTab('attendance')">✓ Attendance</button>
+            <button class="nav-btn" onclick="switchTab('cr-tasks')">👨‍💼 CR Tasks</button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="grid-3">
+                <div class="stat-card" style="border-left-color: var(--primary);">
+                    <div class="stat-info">
+                        <h3>24</h3>
+                        <p>Pending Assignments</p>
+                    </div>
+                    <div class="stat-icon">📚</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--success);">
+                    <div class="stat-info">
+                        <h3>87%</h3>
+                        <p>Class Attendance</p>
+                    </div>
+                    <div class="stat-icon">✓</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--warning);">
+                    <div class="stat-info">
+                        <h3>5</h3>
+                        <p>Upcoming Events</p>
+                    </div>
+                    <div class="stat-icon">📅</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Quick Actions</h2>
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action-btn" onclick="openModal('addNotification')">
+                        <div class="quick-action-icon">📢</div>
+                        <div class="quick-action-text">Post Notification</div>
+                    </div>
+                    <div class="quick-action-btn" onclick="openModal('addAssignment')">
+                        <div class="quick-action-icon">✍️</div>
+                        <div class="quick-action-text">Add Assignment</div>
+                    </div>
+                    <div class="quick-action-btn" onclick="openModal('updateTiming')">
+                        <div class="quick-action-icon">⏰</div>
+                        <div class="quick-action-text">Update Timing</div>
+                    </div>
+                    <div class="quick-action-btn" onclick="switchTab('attendance')">
+                        <div class="quick-action-icon">📊</div>
+                        <div class="quick-action-text">Mark Attendance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Today's Schedule</h2>
+                </div>
+                <div class="timetable">
+                    <div class="timetable-slot">
+                        <div class="slot-time">09:00 - 09:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Data Structures</div>
+                            <div class="slot-faculty">Dr. Priya Singh <span class="slot-room">Room 301</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">10:00 - 10:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Database Management</div>
+                            <div class="slot-faculty">Prof. Amit Kumar <span class="slot-room">Room 205</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">11:00 - 11:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Operating Systems</div>
+                            <div class="slot-faculty">Dr. Rajesh Verma <span class="slot-room">Room 302</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Notifications</h2>
+                    </div>
+                    <div class="notification-item unread">
+                        <div class="notification-content">
+                            <h4>Class Cancelled - Tomorrow</h4>
+                            <p>Data Structures lab cancelled due to faculty leave</p>
+                            <div class="notification-time">Posted 2 hours ago</div>
+                        </div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-content">
+                            <h4>Assignment Deadline Extended</h4>
+                            <p>DBMS Assignment deadline extended to Feb 5</p>
+                            <div class="notification-time">Posted 1 day ago</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Upcoming Deadlines</h2>
+                    </div>
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <div>
+                                <div class="assignment-title">OS Mini Project</div>
+                                <div class="assignment-subject">Operating Systems</div>
+                            </div>
+                            <div class="assignment-due">Due: Feb 3</div>
+                        </div>
+                    </div>
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <div>
+                                <div class="assignment-title">SQL Lab Assignment</div>
+                                <div class="assignment-subject">DBMS</div>
+                            </div>
+                            <div class="assignment-due">Due: Feb 5</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="notifications" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">All Notifications</h2>
+                    <button class="btn btn-primary" onclick="openModal('addNotification')">+ Post New</button>
+                </div>
+                
+                <div class="notification-item unread">
+                    <div class="notification-content">
+                        <h4>⚠️ Class Cancelled - Tomorrow</h4>
+                        <p>Data Structures lab scheduled for Feb 1st is cancelled due to faculty medical leave. Make-up class will be scheduled next week.</p>
+                        <div class="notification-time">Posted by CR - 2 hours ago</div>
+                    </div>
+                </div>
+
+                <div class="notification-item unread">
+                    <div class="notification-content">
+                        <h4>📅 Assignment Deadline Extended</h4>
+                        <p>DBMS Assignment submission deadline has been extended to February 5, 2026. Please ensure timely submission.</p>
+                        <div class="notification-time">Posted by CR - 1 day ago</div>
+                    </div>
+                </div>
+
+                <div class="notification-item unread">
+                    <div class="notification-content">
+                        <h4>🎉 Industrial Visit Announcement</h4>
+                        <p>Industrial visit to TCS Lucknow scheduled for Feb 10. Registration mandatory. Contact CR for details.</p>
+                        <div class="notification-time">Posted by CR - 2 days ago</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-content">
+                        <h4>📚 Library Books Due</h4>
+                        <p>Reminder: Library books issued in December are due for return by Feb 2. Late fees applicable after due date.</p>
+                        <div class="notification-time">Posted by CR - 3 days ago</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-content">
+                        <h4>⏰ Timing Change - Next Week</h4>
+                        <p>From Feb 5, morning classes will start at 8:30 AM instead of 9:00 AM. Please be punctual.</p>
+                        <div class="notification-time">Posted by CR - 4 days ago</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-content">
+                        <h4>🏆 Hackathon Registration Open</h4>
+                        <p>Annual college hackathon registration is now open. Team size: 3-4 members. Last date: Feb 8. Prize worth ₹50,000.</p>
+                        <div class="notification-time">Posted by CR - 5 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments Tab -->
+        <div id="assignments" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Assignments & Submissions</h2>
+                    <button class="btn btn-primary" onclick="openModal('addAssignment')">+ Add Assignment</button>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Operating Systems Mini Project</div>
+                            <div class="assignment-subject">Operating Systems - Prof. Rajesh Verma</div>
+                        </div>
+                        <div class="assignment-due">Due: Feb 3, 2026</div>
+                    </div>
+                    <div class="assignment-description">
+                        Implement a process scheduling simulator using C/C++. Must include FCFS, SJF, and Round Robin algorithms. Submit code with documentation and test cases.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">15/60 Submitted</span>
+                        </div>
+                        <button class="btn btn-secondary">View Details</button>
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Database Design Project</div>
+                            <div class="assignment-subject">DBMS - Prof. Amit Kumar</div>
+                        </div>
+                        <div class="assignment-due">Due: Feb 5, 2026</div>
+                    </div>
+                    <div class="assignment-description">
+                        Design a complete database for a library management system. Include ER diagram, normalization up to 3NF, and SQL queries for all operations.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">28/60 Submitted</span>
+                        </div>
+                        <button class="btn btn-secondary">View Details</button>
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Binary Search Tree Implementation</div>
+                            <div class="assignment-subject">Data Structures - Dr. Priya Singh</div>
+                        </div>
+                        <div class="assignment-due completed">Completed</div>
+                    </div>
+                    <div class="assignment-description">
+                        Implement BST with insertion, deletion, and all traversal methods. Include time complexity analysis.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-present">60/60 Submitted</span>
+                        </div>
+                        <button class="btn btn-secondary">View Submissions</button>
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Software Engineering Case Study</div>
+                            <div class="assignment-subject">Software Engineering - Dr. Neha Gupta</div>
+                        </div>
+                        <div class="assignment-due">Due: Feb 8, 2026</div>
+                    </div>
+                    <div class="assignment-description">
+                        Analyze a real-world software project failure. Create SRS document, identify issues, and propose solutions using appropriate SDLC model.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">8/60 Submitted</span>
+                        </div>
+                        <button class="btn btn-secondary">View Details</button>
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Computer Networks Lab Report</div>
+                            <div class="assignment-subject">Computer Networks - Prof. Suresh Patel</div>
+                        </div>
+                        <div class="assignment-due">Due: Feb 10, 2026</div>
+                    </div>
+                    <div class="assignment-description">
+                        Submit lab report covering socket programming experiments. Include code, output screenshots, and performance analysis.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">5/60 Submitted</span>
+                        </div>
+                        <button class="btn btn-secondary">View Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timetable Tab -->
+        <div id="timetable" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Weekly Timetable - CSE 2nd Year</h2>
+                    <button class="btn btn-primary" onclick="openModal('updateTiming')">Update Schedule</button>
+                </div>
+
+                <div class="timetable">
+                    <div class="timetable-day">Monday</div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">09:00 - 09:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Data Structures</div>
+                            <div class="slot-faculty">Dr. Priya Singh <span class="slot-room">Room 301</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">10:00 - 10:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Database Management</div>
+                            <div class="slot-faculty">Prof. Amit Kumar <span class="slot-room">Room 205</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">11:00 - 11:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Operating Systems</div>
+                            <div class="slot-faculty">Dr. Rajesh Verma <span class="slot-room">Room 302</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">12:00 - 12:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Software Engineering</div>
+                            <div class="slot-faculty">Dr. Neha Gupta <span class="slot-room">Room 201</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot" style="background: var(--bg-hover);">
+                        <div class="slot-time">12:50 - 01:40</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">🍽️ LUNCH BREAK</div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">01:40 - 03:30</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">DBMS Lab</div>
+                            <div class="slot-faculty">Prof. Amit Kumar <span class="slot-room">Lab 2</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timetable-day">Tuesday</div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">09:00 - 09:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Computer Networks</div>
+                            <div class="slot-faculty">Prof. Suresh Patel <span class="slot-room">Room 303</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">10:00 - 10:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Operating Systems</div>
+                            <div class="slot-faculty">Dr. Rajesh Verma <span class="slot-room">Room 302</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">11:00 - 11:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Data Structures</div>
+                            <div class="slot-faculty">Dr. Priya Singh <span class="slot-room">Room 301</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">12:00 - 12:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Mathematics-III</div>
+                            <div class="slot-faculty">Prof. Anita Sharma <span class="slot-room">Room 104</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot" style="background: var(--bg-hover);">
+                        <div class="slot-time">12:50 - 01:40</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">🍽️ LUNCH BREAK</div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">01:40 - 03:30</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Data Structures Lab</div>
+                            <div class="slot-faculty">Dr. Priya Singh <span class="slot-room">Lab 1</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timetable-day">Wednesday</div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">09:00 - 09:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Software Engineering</div>
+                            <div class="slot-faculty">Dr. Neha Gupta <span class="slot-room">Room 201</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">10:00 - 10:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Database Management</div>
+                            <div class="slot-faculty">Prof. Amit Kumar <span class="slot-room">Room 205</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">11:00 - 11:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Computer Networks</div>
+                            <div class="slot-faculty">Prof. Suresh Patel <span class="slot-room">Room 303</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">12:00 - 12:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Operating Systems</div>
+                            <div class="slot-faculty">Dr. Rajesh Verma <span class="slot-room">Room 302</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot" style="background: var(--bg-hover);">
+                        <div class="slot-time">12:50 - 01:40</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">🍽️ LUNCH BREAK</div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">01:40 - 03:30</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">OS Lab</div>
+                            <div class="slot-faculty">Dr. Rajesh Verma <span class="slot-room">Lab 3</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timetable-day">Thursday</div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">09:00 - 09:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Mathematics-III</div>
+                            <div class="slot-faculty">Prof. Anita Sharma <span class="slot-room">Room 104</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">10:00 - 10:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Data Structures</div>
+                            <div class="slot-faculty">Dr. Priya Singh <span class="slot-room">Room 301</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">11:00 - 11:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Software Engineering</div>
+                            <div class="slot-faculty">Dr. Neha Gupta <span class="slot-room">Room 201</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">12:00 - 12:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Database Management</div>
+                            <div class="slot-faculty">Prof. Amit Kumar <span class="slot-room">Room 205</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot" style="background: var(--bg-hover);">
+                        <div class="slot-time">12:50 - 01:40</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">🍽️ LUNCH BREAK</div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">01:40 - 03:30</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Computer Networks Lab</div>
+                            <div class="slot-faculty">Prof. Suresh Patel <span class="slot-room">Lab 4</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timetable-day">Friday</div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">09:00 - 09:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Operating Systems</div>
+                            <div class="slot-faculty">Dr. Rajesh Verma <span class="slot-room">Room 302</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">10:00 - 10:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Computer Networks</div>
+                            <div class="slot-faculty">Prof. Suresh Patel <span class="slot-room">Room 303</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">11:00 - 11:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Mathematics-III</div>
+                            <div class="slot-faculty">Prof. Anita Sharma <span class="slot-room">Room 104</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">12:00 - 12:50</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Technical Communication</div>
+                            <div class="slot-faculty">Prof. Kavita Rao <span class="slot-room">Room 102</span></div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot" style="background: var(--bg-hover);">
+                        <div class="slot-time">12:50 - 01:40</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">🍽️ LUNCH BREAK</div>
+                        </div>
+                    </div>
+                    <div class="timetable-slot">
+                        <div class="slot-time">01:40 - 03:30</div>
+                        <div class="slot-details">
+                            <div class="slot-subject">Software Engineering Lab</div>
+                            <div class="slot-faculty">Dr. Neha Gupta <span class="slot-room">Lab 2</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Tab -->
+        <div id="attendance" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Attendance Management</h2>
+                    <button class="btn btn-primary" onclick="markAttendance()">Mark Today's Attendance</button>
+                </div>
+
+                <h3 style="margin-bottom: 15px; font-size: 1.3rem;">Subject-wise Attendance Overview</h3>
+                
+                <div class="attendance-progress">
+                    <div class="progress-header">
+                        <span style="font-weight: 600;">Data Structures</span>
+                        <span style="font-weight: 700; color: var(--success);">92%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 92%;"></div>
+                    </div>
+                </div>
+
+                <div class="attendance-progress">
+                    <div class="progress-header">
+                        <span style="font-weight: 600;">Database Management</span>
+                        <span style="font-weight: 700; color: var(--success);">88%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 88%;"></div>
+                    </div>
+                </div>
+
+                <div class="attendance-progress">
+                    <div class="progress-header">
+                        <span style="font-weight: 600;">Operating Systems</span>
+                        <span style="font-weight: 700; color: var(--success);">85%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
+                    </div>
+                </div>
+
+                <div class="attendance-progress">
+                    <div class="progress-header">
+                        <span style="font-weight: 600;">Computer Networks</span>
+                        <span style="font-weight: 700; color: var(--success);">90%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 90%;"></div>
+                    </div>
+                </div>
+
+                <div class="attendance-progress">
+                    <div class="progress-header">
+                        <span style="font-weight: 600;">Software Engineering</span>
+                        <span style="font-weight: 700; color: var(--warning);">78%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%; background: var(--warning);"></div>
+                    </div>
+                </div>
+
+                <div class="attendance-progress">
+                    <div class="progress-header">
+                        <span style="font-weight: 600;">Mathematics-III</span>
+                        <span style="font-weight: 700; color: var(--success);">94%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 94%;"></div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 30px 0 15px; font-size: 1.3rem;">Students with Low Attendance (Below 75%)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Roll No</th>
+                                <th>Student Name</th>
+                                <th>Overall %</th>
+                                <th>Critical Subject</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2201001</td>
+                                <td>Aarav Patel</td>
+                                <td><span class="badge badge-absent">68%</span></td>
+                                <td>Software Engineering (62%)</td>
+                                <td><button class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;">Send Alert</button></td>
+                            </tr>
+                            <tr>
+                                <td>2201015</td>
+                                <td>Ananya Verma</td>
+                                <td><span class="badge badge-absent">72%</span></td>
+                                <td>Operating Systems (70%)</td>
+                                <td><button class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;">Send Alert</button></td>
+                            </tr>
+                            <tr>
+                                <td>2201032</td>
+                                <td>Rohan Gupta</td>
+                                <td><span class="badge badge-absent">71%</span></td>
+                                <td>DBMS (68%)</td>
+                                <td><button class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;">Send Alert</button></td>
+                            </tr>
+                            <tr>
+                                <td>2201048</td>
+                                <td>Priya Sharma</td>
+                                <td><span class="badge badge-absent">74%</span></td>
+                                <td>Computer Networks (73%)</td>
+                                <td><button class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;">Send Alert</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CR Tasks Tab -->
+        <div id="cr-tasks" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Class Representative Tasks</h2>
+                </div>
+
+                <h3 style="margin-bottom: 15px; font-size: 1.3rem;">Pending Tasks</h3>
+                
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Collect Assignment Submissions</div>
+                            <div class="assignment-subject">DBMS - Due Feb 5</div>
+                        </div>
+                        <div class="assignment-due">Priority: High</div>
+                    </div>
+                    <div class="assignment-description">
+                        Collect hard copies of DBMS assignment from all students and submit to Prof. Amit Kumar's office.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">28/60 Collected</span>
+                        </div>
+                        <button class="btn btn-success">Mark Complete</button>
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Update Faculty About Class Strength</div>
+                            <div class="assignment-subject">Monthly Report</div>
+                        </div>
+                        <div class="assignment-due">Priority: Medium</div>
+                    </div>
+                    <div class="assignment-description">
+                        Prepare and submit monthly attendance report to class coordinator. Include subject-wise breakdown and students below 75%.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">In Progress</span>
+                        </div>
+                        <button class="btn btn-success">Mark Complete</button>
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Organize Industrial Visit</div>
+                            <div class="assignment-subject">Upcoming Event - Feb 10</div>
+                        </div>
+                        <div class="assignment-due">Priority: High</div>
+                    </div>
+                    <div class="assignment-description">
+                        Coordinate with TCS for industrial visit. Collect consent forms from students, arrange transportation, and brief students about dress code and guidelines.
+                    </div>
+                    <div class="assignment-footer">
+                        <div>
+                            <span class="badge badge-pending">45/60 Registrations</span>
+                        </div>
+                        <button class="btn btn-secondary">View Details</button>
+                    </div>
+                </div>
+
+                <h3 style="margin: 30px 0 15px; font-size: 1.3rem;">Completed Tasks</h3>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Communicate Exam Schedule</div>
+                            <div class="assignment-subject">Mid-Semester Exams</div>
+                        </div>
+                        <div class="assignment-due completed">Completed</div>
+                    </div>
+                    <div class="assignment-description">
+                        Informed all students about mid-semester exam schedule via WhatsApp group and class notification.
+                    </div>
+                </div>
+
+                <div class="assignment-card">
+                    <div class="assignment-header">
+                        <div>
+                            <div class="assignment-title">Collect Feedback Forms</div>
+                            <div class="assignment-subject">Faculty Feedback - Semester 3</div>
+                        </div>
+                        <div class="assignment-due completed">Completed</div>
+                    </div>
+                    <div class="assignment-description">
+                        Collected faculty feedback forms from all 60 students and submitted to HOD office.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Add Notification Modal -->
+    <div id="addNotification" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Post New Notification</h2>
+                <button class="close-modal" onclick="closeModal('addNotification')">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); alert('Notification posted successfully!'); closeModal('addNotification');">
+                <div class="form-group">
+                    <label>Notification Title *</label>
+                    <input type="text" class="form-control" placeholder="e.g., Class Cancelled Tomorrow" required>
+                </div>
+                <div class="form-group">
+                    <label>Message *</label>
+                    <textarea class="form-control" placeholder="Enter notification details..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select class="form-control">
+                        <option>Normal</option>
+                        <option>Important</option>
+                        <option>Urgent</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Post Notification</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addNotification')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Assignment Modal -->
+    <div id="addAssignment" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Assignment</h2>
+                <button class="close-modal" onclick="closeModal('addAssignment')">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); alert('Assignment added successfully!'); closeModal('addAssignment');">
+                <div class="form-group">
+                    <label>Assignment Title *</label>
+                    <input type="text" class="form-control" placeholder="e.g., Binary Search Tree Implementation" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject *</label>
+                    <select class="form-control" required>
+                        <option value="">Select Subject</option>
+                        <option>Data Structures</option>
+                        <option>Database Management</option>
+                        <option>Operating Systems</option>
+                        <option>Computer Networks</option>
+                        <option>Software Engineering</option>
+                        <option>Mathematics-III</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Faculty Name *</label>
+                    <input type="text" class="form-control" placeholder="e.g., Dr. Priya Singh" required>
+                </div>
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea class="form-control" placeholder="Assignment details and requirements..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Due Date *</label>
+                    <input type="date" class="form-control" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Add Assignment</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addAssignment')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Timing Modal -->
+    <div id="updateTiming" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Update Class Timing</h2>
+                <button class="close-modal" onclick="closeModal('updateTiming')">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); alert('Timing updated successfully!'); closeModal('updateTiming');">
+                <div class="form-group">
+                    <label>Select Day *</label>
+                    <select class="form-control" required>
+                        <option value="">Choose Day</option>
+                        <option>Monday</option>
+                        <option>Tuesday</option>
+                        <option>Wednesday</option>
+                        <option>Thursday</option>
+                        <option>Friday</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Time Slot *</label>
+                    <select class="form-control" required>
+                        <option value="">Select Time</option>
+                        <option>09:00 - 09:50</option>
+                        <option>10:00 - 10:50</option>
+                        <option>11:00 - 11:50</option>
+                        <option>12:00 - 12:50</option>
+                        <option>01:40 - 03:30</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subject *</label>
+                    <input type="text" class="form-control" placeholder="e.g., Data Structures" required>
+                </div>
+                <div class="form-group">
+                    <label>Faculty Name *</label>
+                    <input type="text" class="form-control" placeholder="e.g., Dr. Priya Singh" required>
+                </div>
+                <div class="form-group">
+                    <label>Room/Lab *</label>
+                    <input type="text" class="form-control" placeholder="e.g., Room 301 or Lab 1" required>
+                </div>
+                <div class="form-group">
+                    <label>Reason for Change</label>
+                    <textarea class="form-control" placeholder="Optional: Explain why timing is being updated"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update Timing</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('updateTiming')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="classHub.js"></script>
+</body>
+</html>
