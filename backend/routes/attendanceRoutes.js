@@ -1,6 +1,5 @@
-const express = express();
-import Attendance from "../models/attendance.js";
-
+const express = require("express");
+const Attendance = require("../models/attendance.js");
 const router = express.Router();
 
 router.post("/", async(req,res)=>{
@@ -14,3 +13,4 @@ router.get("/", async(req,res)=>{
 });
 
 export default router;
+module.exports = router;

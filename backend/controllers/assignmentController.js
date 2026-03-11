@@ -1,11 +1,21 @@
 import Assignment from "../models/Assignment.js";
 
-export const createAssignment = async (req,res)=>{
-  const data = await Assignment.create(req.body);
-  res.json(data);
+// CREATE: Add a new assignment
+export const createAssignment = async (req, res) => {
+  try {
+    const data = await Assignment.create(req.body);
+    res.status(201).json(data);
+  } catch (error) {
+    res.status(400).json({ message: "Error creating assignment", error: error.message });
+  }
 };
 
-export const getAssignments = async (req,res)=>{
-  const data = await Assignment.find();
-  res.json(data);
+// READ: Get all assignments
+export const getAssignments = async (req, res) => {
+  try {
+    const data = await Assignment.find();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching assignments", error: error.message });
+  }
 };

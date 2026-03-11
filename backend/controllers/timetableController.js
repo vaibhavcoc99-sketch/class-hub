@@ -10,6 +10,9 @@ const createTimetable = async (req, res) => {
   }
 };
 
+
+
+
 const getTimetable = async (req, res) => {
   try {
     const data = await Timetable.find({});
