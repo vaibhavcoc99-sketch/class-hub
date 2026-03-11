@@ -12,7 +12,7 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 dotenv.config();
 
 const app = express();
-
+ console.log("Hello");
 app.use(cors());
 app.use(express.json());
 
