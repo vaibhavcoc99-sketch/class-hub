@@ -12,7 +12,7 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 dotenv.config();
 
 const app = express();
-
+ console.log("Hell2o");
 app.use(cors());
 app.use(express.json());
 
