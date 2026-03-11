@@ -1,4 +1,4 @@
-import express from "express";
+const express = express();
 import Attendance from "../models/attendance.js";
 
 const router = express.Router();
