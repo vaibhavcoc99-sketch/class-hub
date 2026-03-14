@@ -29,6 +29,7 @@ It provides a structured digital environment where teachers and students can int
 ## Team Members
 
 * Vaibhav Agarwal 
+* Priyanshu
 
 ## Objective
 
