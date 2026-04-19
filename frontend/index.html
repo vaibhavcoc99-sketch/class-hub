@@ -79,15 +79,15 @@
 
                 <!-- Signup Form -->
                 <form id="signup-form" style="display: none;" onsubmit="handleSignup(event)">
-                    <div class="form-group">
+                    <div class="form-group" id="signup-name-group" style="display: none;">
                         <label for="signup-name">Full Name</label>
-                        <input type="text" class="form-control" id="signup-name" placeholder="e.g. Rahul Sharma" required>
+                        <input type="text" class="form-control" id="signup-name" placeholder="e.g. Rahul Sharma">
                     </div>
                     <div class="form-group">
-                        <label for="signup-email">Email Address</label>
-                        <input type="email" class="form-control" id="signup-email" placeholder="you@university.edu" required>
+                        <label for="signup-email">College Email Address *</label>
+                        <input type="email" class="form-control" id="signup-email" placeholder="e.g. 2400520100071@ietlucknow.ac.in" required>
                     </div>
-                    <div class="form-group" id="signup-roll-group">
+                    <div class="form-group" id="signup-roll-group" style="display: none;">
                         <label for="signup-roll">Roll Number</label>
                         <input type="text" class="form-control" id="signup-roll" placeholder="e.g. 2201001">
                     </div>
@@ -155,6 +155,7 @@
         </div>
     </div>
 
+    <script src="js/data.js"></script>
     <script src="js/auth.js"></script>
 </body>
 </html>

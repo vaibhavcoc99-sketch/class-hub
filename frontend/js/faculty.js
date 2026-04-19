@@ -20,12 +20,7 @@ function logout() {
 }
 
 // ---- Mock Data ----
-const facultyAnnouncements = [
-    { id: 1, title: 'Class Cancelled — Tomorrow', message: 'Data Structures lab scheduled for tomorrow is cancelled due to medical leave. Make-up class will be scheduled next week.', priority: 'urgent', audience: 'CSE 2nd Year', time: '2 hours ago' },
-    { id: 2, title: 'Assignment Deadline Extended', message: 'DBMS Assignment submission deadline has been extended to April 25, 2026. Please ensure timely submission.', priority: 'important', audience: 'All Students', time: '1 day ago' },
-    { id: 3, title: 'Mid-Semester Results Published', message: 'Mid-semester exam results for Data Structures have been uploaded to the portal. Check your marks and contact for any discrepancies.', priority: 'normal', audience: 'CSE 2nd Year', time: '3 days ago' },
-    { id: 4, title: 'Guest Lecture on Cloud Computing', message: 'A guest lecture on Cloud Computing & AWS will be held on April 24 at 2:00 PM in Auditorium. Attendance is mandatory.', priority: 'important', audience: 'All Students', time: '5 days ago' }
-];
+const facultyAnnouncements = [];
 
 let facultyAssignments = []; // dynamically fetched from MongoDB
 const API_BASE = 'http://localhost:5001';
@@ -34,10 +29,10 @@ const timetableData = {
     Monday: [
         { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Abhishek Nagar', room: 'Lt 21' },
         { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Prof. Adeeb', room: 'EED201' },
         { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
         { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' }
+        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Prof.Kajal', room: 'Lt 21' }
     ],
     Tuesday: [
         { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
@@ -74,35 +69,17 @@ const timetableData = {
 };
 
 const attendanceData = [
-    { subject: 'Data Structures', percent: 92 },
-    { subject: 'Database Management', percent: 88 },
-    { subject: 'Operating Systems', percent: 85 },
-    { subject: 'Computer Networks', percent: 90 },
-    { subject: 'Software Engineering', percent: 78 },
-    { subject: 'Mathematics-III', percent: 94 }
+    { subject: 'Operating System', percent: 92 },
+    { subject: 'OOps using JAVA', percent: 88 },
+    { subject: 'Automata', percent: 85 },
+    { subject: 'Python', percent: 90 },
+    { subject: 'Ethical Research', percent: 78 },
+    { subject: 'Sensor & Instrumentation', percent: 94 }
 ];
 
-const lowAttendanceStudents = [
-    { rollNo: '2201001', name: 'Aarav Patel', percent: 68, critical: 'Software Engineering (62%)' },
-    { rollNo: '2201015', name: 'Ananya Verma', percent: 72, critical: 'Operating Systems (70%)' },
-    { rollNo: '2201032', name: 'Rohan Gupta', percent: 71, critical: 'DBMS (68%)' },
-    { rollNo: '2201048', name: 'Priya Sharma', percent: 74, critical: 'Computer Networks (73%)' }
-];
+const lowAttendanceStudents = [];
 
-const mockStudents = [
-    { rollNo: '2201001', name: 'Aarav Patel' },
-    { rollNo: '2201002', name: 'Arjun Singh' },
-    { rollNo: '2201003', name: 'Diya Mehta' },
-    { rollNo: '2201004', name: 'Kavya Reddy' },
-    { rollNo: '2201005', name: 'Meera Joshi' },
-    { rollNo: '2201006', name: 'Neha Agarwal' },
-    { rollNo: '2201007', name: 'Om Prakash' },
-    { rollNo: '2201008', name: 'Pooja Yadav' },
-    { rollNo: '2201009', name: 'Ravi Tiwari' },
-    { rollNo: '2201010', name: 'Sneha Kapoor' },
-    { rollNo: '2201011', name: 'Tanisha Bhatt' },
-    { rollNo: '2201012', name: 'Vikas Chauhan' }
-];
+const mockStudents = GLOBAL_STUDENT_LIST;
 
 // ---- Tab Switching ----
 function switchTab(tabName) {

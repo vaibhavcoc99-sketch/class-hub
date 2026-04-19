@@ -21,14 +21,7 @@ function logout() {
 }
 
 // ---- Mock Data ----
-const announcements = [
-    { id: 1, title: 'Class Cancelled — Tomorrow', message: 'Data Structures lab scheduled for tomorrow is cancelled due to faculty medical leave. Make-up class will be scheduled next week.', priority: 'urgent', postedBy: 'Dr. Priya Singh', time: '2 hours ago', unread: true },
-    { id: 2, title: 'Assignment Deadline Extended', message: 'DBMS Assignment submission deadline has been extended to April 25, 2026. Please ensure timely submission.', priority: 'important', postedBy: 'Prof. Amit Kumar', time: '1 day ago', unread: true },
-    { id: 3, title: 'Industrial Visit Announcement', message: 'Industrial visit to TCS Lucknow scheduled for April 28. Registration mandatory. Contact CR for details.', priority: 'normal', postedBy: 'Class Representative', time: '2 days ago', unread: true },
-    { id: 4, title: 'Library Books Due', message: 'Reminder: Library books issued in March are due for return by April 22. Late fees applicable after due date.', priority: 'normal', postedBy: 'Library Dept.', time: '3 days ago', unread: false },
-    { id: 5, title: 'Timing Change — Next Week', message: 'From April 21, morning classes will start at 8:30 AM instead of 9:00 AM. Please be punctual.', priority: 'important', postedBy: 'HOD Office', time: '4 days ago', unread: false },
-    { id: 6, title: 'Hackathon Registration Open', message: 'Annual college hackathon registration is now open. Team size: 3-4 members. Last date: April 26. Prize worth ₹50,000.', priority: 'normal', postedBy: 'Tech Club', time: '5 days ago', unread: false }
-];
+const announcements = [];
 
 let assignments = []; // dynamically fetched from MongoDB
 const API_BASE = 'http://localhost:5001';
@@ -77,12 +70,12 @@ const timetableData = {
 };
 
 const attendanceData = [
-    { subject: 'Data Structures', percent: 92 },
-    { subject: 'Database Management', percent: 88 },
-    { subject: 'Operating Systems', percent: 85 },
-    { subject: 'Computer Networks', percent: 90 },
-    { subject: 'Software Engineering', percent: 78 },
-    { subject: 'Mathematics-III', percent: 94 }
+    { subject: 'Operating System', percent: 92 },
+    { subject: 'OOps using JAVA', percent: 88 },
+    { subject: 'Automata', percent: 85 },
+    { subject: 'Python', percent: 90 },
+    { subject: 'Ethical Research', percent: 78 },
+    { subject: 'Sensor & Instrumentation', percent: 94 }
 ];
 
 // ---- Tab Switching ----

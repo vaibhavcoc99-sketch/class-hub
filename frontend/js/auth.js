@@ -46,6 +46,7 @@ function selectRole(role) {
     selectedRole = role;
     const studentEl = document.getElementById('role-student');
     const facultyEl = document.getElementById('role-faculty');
+    const nameGroup = document.getElementById('signup-name-group');
     const rollGroup = document.getElementById('signup-roll-group');
     const deptGroup = document.getElementById('signup-dept-group');
 
@@ -53,9 +54,11 @@ function selectRole(role) {
     facultyEl.classList.toggle('active', role === 'faculty');
 
     if (role === 'student') {
-        rollGroup.style.display = 'block';
+        nameGroup.style.display = 'none';
+        rollGroup.style.display = 'none';
         deptGroup.style.display = 'none';
     } else {
+        nameGroup.style.display = 'block';
         rollGroup.style.display = 'none';
         deptGroup.style.display = 'block';
     }
@@ -115,10 +118,31 @@ function generateCaptcha() {
 // ---- OTP ----
 async function sendOtp() {
     const email = document.getElementById('signup-email').value.trim();
-    const name = document.getElementById('signup-name').value.trim();
+    let name = document.getElementById('signup-name').value.trim();
     const password = document.getElementById('signup-password').value;
     const confirm = document.getElementById('signup-confirm').value;
     const captchaInput = document.getElementById('captcha-input').value.trim();
+    
+    // Strict validation for students based on real roster
+    const activeRole = selectedRole;
+    if (activeRole === 'student') {
+        const studentDomain = '@ietlucknow.ac.in';
+        if (!email.toLowerCase().endsWith(studentDomain)) {
+            return showToast(`Students must use their college ${studentDomain} email`, 'error');
+        }
+        
+        const rollParam = email.split('@')[0];
+        const mappedStudent = GLOBAL_STUDENT_LIST.find(s => s.rollNo === rollParam);
+        
+        if (!mappedStudent) {
+            return showToast(`Roll No ${rollParam} is not registered in the class roster.`, 'error');
+        }
+        
+        // Auto-assign properties explicitly overriding anything typed
+        document.getElementById('signup-name').value = mappedStudent.name;
+        document.getElementById('signup-roll').value = mappedStudent.rollNo;
+        name = mappedStudent.name; // update local var to pass !name check
+    }
 
     if (!name) return showToast('Please enter your name', 'error');
     if (!email) return showToast('Please enter your email', 'error');
