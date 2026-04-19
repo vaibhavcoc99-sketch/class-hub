@@ -97,9 +97,25 @@ function switchTab(tabName) {
 }
 
 // ---- Modal Helpers ----
-function openModal(id) {
+async function openModal(id) {
     const m = document.getElementById(id);
     if (m) m.classList.add('active');
+
+    // When opening the alert modal, show live student count
+    if (id === 'sendAlertModal') {
+        const el = document.getElementById('alert-modal-count');
+        if (el) {
+            try {
+                const res = await fetch(`${API_BASE}/api/notify/students-count`);
+                const data = await res.json();
+                if (data.success) {
+                    el.textContent = `${data.count} registered`;
+                }
+            } catch (e) {
+                el.textContent = 'all';
+            }
+        }
+    }
 }
 function closeModal(id) {
     const m = document.getElementById(id);
@@ -303,19 +319,21 @@ function updateStats() {
 
 // ---- Actions ----
 
-function postAnnouncement(e) {
+async function postAnnouncement(e) {
     e.preventDefault();
     const title = document.getElementById('ann-title').value.trim();
     const message = document.getElementById('ann-message').value.trim();
     const priority = document.getElementById('ann-priority').value;
     const audience = document.getElementById('ann-audience').value;
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const audienceLabel = audience === 'all' ? 'All Students' : audience === 'cse' ? 'CSE Department' : 'Specific Section';
 
     facultyAnnouncements.unshift({
         id: Date.now(),
         title,
         message,
         priority,
-        audience: audience === 'all' ? 'All Students' : audience === 'cse' ? 'CSE Department' : 'Specific Section',
+        audience: audienceLabel,
         time: 'Just now'
     });
 
@@ -323,7 +341,31 @@ function postAnnouncement(e) {
     e.target.reset();
     renderFacultyAnnouncements();
     updateStats();
-    showToast('Announcement posted successfully!', 'success');
+    showToast('Announcement posted! Sending emails to students...', 'info');
+
+    // 📧 Broadcast email to all registered students
+    try {
+        const res = await fetch(`${API_BASE}/api/notify/announcement`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                message,
+                priority,
+                audience: audienceLabel,
+                facultyName: user.name || 'Faculty'
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`📧 Email sent to ${data.sentCount} student(s)!`, 'success');
+        } else {
+            showToast('Announcement posted, but email delivery failed.', 'warning');
+        }
+    } catch (err) {
+        console.error('Notification error:', err);
+        showToast('Announcement posted. Email notification failed (server unreachable).', 'warning');
+    }
 }
 
 async function createAssignment(e) {
@@ -358,8 +400,33 @@ async function createAssignment(e) {
         if (data.success) {
             closeModal('createAssignmentModal');
             e.target.reset();
-            showToast('Assignment created successfully in MongoDB!', 'success');
+            showToast('Assignment created! Sending emails to students...', 'info');
             await fetchAssignments(); // refresh list
+
+            // 📧 Broadcast assignment notification to all registered students
+            try {
+                const notifyRes = await fetch(`${API_BASE}/api/notify/assignment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        subject,
+                        description,
+                        dueDate: formattedDate,
+                        totalMarks,
+                        facultyName: user.name || 'Faculty'
+                    })
+                });
+                const notifyData = await notifyRes.json();
+                if (notifyData.success) {
+                    showToast(`📧 Assignment emailed to ${notifyData.sentCount} student(s)!`, 'success');
+                } else {
+                    showToast('Assignment saved, but email notification failed.', 'warning');
+                }
+            } catch (notifyErr) {
+                console.error('Assignment notify error:', notifyErr);
+                showToast('Assignment saved. Email notification failed (server unreachable).', 'warning');
+            }
         } else {
             showToast('Error saving assignment', 'error');
         }
@@ -369,11 +436,40 @@ async function createAssignment(e) {
     }
 }
 
-function updateTimetable(e) {
+async function updateTimetable(e) {
     e.preventDefault();
+    const day     = document.getElementById('tt-day').value;
+    const time    = document.getElementById('tt-time').value;
+    const subject = document.getElementById('tt-subject').value;
+    const faculty = document.getElementById('tt-faculty').value;
+    const room    = document.getElementById('tt-room').value;
+    const reason  = document.getElementById('tt-reason').value.trim();
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+
     closeModal('editTimetableModal');
     e.target.reset();
-    showToast('Timetable updated successfully!', 'success');
+    showToast('Timetable updated! Notifying students via email...', 'info');
+
+    // 📧 Broadcast timetable change to all registered students
+    try {
+        const res = await fetch(`${API_BASE}/api/notify/timetable`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                day, time, subject, faculty, room, reason,
+                changedBy: user.name || 'Faculty'
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`📧 Timetable change sent to ${data.sentCount} student(s)!`, 'success');
+        } else {
+            showToast('Timetable saved, but email notification failed.', 'warning');
+        }
+    } catch (err) {
+        console.error('Timetable notify error:', err);
+        showToast('Timetable updated. Email notification failed (server unreachable).', 'warning');
+    }
 }
 
 async function openGradeModal(assignmentId) {
@@ -458,9 +554,75 @@ function saveAttendance() {
     showToast('Attendance saved successfully!', 'success');
 }
 
-function sendAlert(studentName) {
-    if (confirm(`Send attendance alert to ${studentName}?`)) {
-        showToast(`Alert sent to ${studentName}!`, 'success');
+async function sendAlert(studentName, studentEmail) {
+    if (!confirm(`Send attendance alert email to ${studentName}?`)) return;
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+
+    showToast(`Sending alert to ${studentName}...`, 'info');
+    try {
+        const res = await fetch(`${API_BASE}/api/notify/alert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: `Attendance Warning — ${studentName}`,
+                message: `Dear ${studentName}, your attendance has fallen below the required 75% threshold. Please ensure regular attendance to avoid detention. Contact your faculty for further guidance.`,
+                alertType: 'low_attendance',
+                facultyName: user.name || 'Faculty',
+                targetEmails: studentEmail ? [studentEmail] : []
+            })
+        });
+        const data = await res.json();
+        if (data.success && data.sentCount > 0) {
+            showToast(`⚠️ Attendance alert sent to ${studentName}!`, 'success');
+        } else {
+            showToast(`Alert sent (email may have failed for ${studentName})`, 'warning');
+        }
+    } catch (err) {
+        console.error('Alert send error:', err);
+        showToast(`Alert failed for ${studentName}`, 'error');
+    }
+}
+
+// ---- Custom Alert Broadcast ----
+async function sendCustomAlert(e) {
+    e.preventDefault();
+    const alertType = document.getElementById('alert-type').value;
+    const title     = document.getElementById('alert-title').value.trim();
+    const message   = document.getElementById('alert-message').value.trim();
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = '⏳ Sending...';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/notify/alert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                message,
+                alertType,
+                facultyName: user.name || 'Faculty'
+                // no targetEmails → broadcasts to ALL students
+            })
+        });
+        const data = await res.json();
+
+        closeModal('sendAlertModal');
+        e.target.reset();
+
+        if (data.success) {
+            showToast(`📣 Alert sent to ${data.sentCount} student(s) successfully!`, 'success');
+        } else {
+            showToast('Alert failed to send. Check server.', 'error');
+        }
+    } catch (err) {
+        console.error('Custom alert error:', err);
+        showToast('Network error while sending alert.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📧 Send to All Students';
     }
 }
 
@@ -476,7 +638,7 @@ function showToast(message, type = 'info') {
 }
 
 // ---- Init ----
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     updateStats();
     renderRecentActivity();
     renderFacultyAnnouncements();
@@ -484,4 +646,16 @@ document.addEventListener('DOMContentLoaded', function () {
     renderAttendanceProgress();
     renderLowAttendance();
     fetchAssignments(); // Loads assignments dynamically from MongoDB
+
+    // Fetch and display registered student count in Overview
+    try {
+        const res = await fetch(`${API_BASE}/api/notify/students-count`);
+        const data = await res.json();
+        if (data.success) {
+            const el = document.getElementById('stat-total-students');
+            if (el) el.textContent = data.count;
+        }
+    } catch (err) {
+        console.warn('Could not fetch student count:', err.message);
+    }
 });

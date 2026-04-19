@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassHub — Faculty Dashboard</title>
-    <meta name="description" content="Faculty dashboard for ClassHub — manage announcements, assignments, timetable, and attendance.">
+    <meta name="description"
+        content="Faculty dashboard for ClassHub — manage announcements, assignments, timetable, and attendance.">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-enter">
+
+<body class="page-enter">//hello world
     <!-- Header -->
     <header class="header">
         <div class="header-content">
@@ -74,21 +77,28 @@
                     <h2 class="card-title">Quick Actions</h2>
                 </div>
                 <div class="quick-actions">
-                    <div class="quick-action-btn" onclick="switchTab('announcements'); setTimeout(() => openModal('postAnnouncementModal'), 200);">
+                    <div class="quick-action-btn"
+                        onclick="switchTab('announcements'); setTimeout(() => openModal('postAnnouncementModal'), 200);">
                         <span class="quick-action-icon">📢</span>
                         <span class="quick-action-text">Post Announcement</span>
                     </div>
-                    <div class="quick-action-btn" onclick="switchTab('assignments'); setTimeout(() => openModal('createAssignmentModal'), 200);">
+                    <div class="quick-action-btn"
+                        onclick="switchTab('assignments'); setTimeout(() => openModal('createAssignmentModal'), 200);">
                         <span class="quick-action-icon">✍️</span>
                         <span class="quick-action-text">Create Assignment</span>
                     </div>
-                    <div class="quick-action-btn" onclick="switchTab('timetable'); setTimeout(() => openModal('editTimetableModal'), 200);">
+                    <div class="quick-action-btn"
+                        onclick="switchTab('timetable'); setTimeout(() => openModal('editTimetableModal'), 200);">
                         <span class="quick-action-icon">⏰</span>
                         <span class="quick-action-text">Update Timetable</span>
                     </div>
                     <div class="quick-action-btn" onclick="switchTab('attendance')">
                         <span class="quick-action-icon">✅</span>
                         <span class="quick-action-text">Mark Attendance</span>
+                    </div>
+                    <div class="quick-action-btn" onclick="openModal('sendAlertModal')">
+                        <span class="quick-action-icon">📣</span>
+                        <span class="quick-action-text">Send Alert</span>
                     </div>
                 </div>
             </div>
@@ -122,7 +132,8 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Manage Assignments</h2>
-                    <button class="btn btn-primary" onclick="openModal('createAssignmentModal')">+ Create Assignment</button>
+                    <button class="btn btn-primary" onclick="openModal('createAssignmentModal')">+ Create
+                        Assignment</button>
                 </div>
                 <div id="faculty-assignments">
                     <!-- Filled by JS -->
@@ -148,17 +159,20 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Attendance Management</h2>
-                    <button class="btn btn-primary" id="mark-attendance-btn" onclick="toggleAttendanceMode()">📋 Mark Attendance</button>
+                    <button class="btn btn-primary" id="mark-attendance-btn" onclick="toggleAttendanceMode()">📋 Mark
+                        Attendance</button>
                 </div>
 
                 <!-- Subject-wise progress -->
-                <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Subject-wise Class Attendance</h3>
+                <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Subject-wise Class
+                    Attendance</h3>
                 <div id="attendance-progress">
                     <!-- Filled by JS -->
                 </div>
 
                 <!-- Low attendance students -->
-                <h3 style="margin: 28px 0 14px; font-size: 1.15rem; color: var(--text-secondary);">Students Below 75% Attendance</h3>
+                <h3 style="margin: 28px 0 14px; font-size: 1.15rem; color: var(--text-secondary);">Students Below 75%
+                    Attendance</h3>
                 <div class="table-container">
                     <table id="low-attendance-table">
                         <thead>
@@ -178,7 +192,8 @@
 
                 <!-- Attendance marking section (hidden by default) -->
                 <div id="attendance-marking" style="display: none; margin-top: 28px;">
-                    <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Mark Today's Attendance</h3>
+                    <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Mark Today's
+                        Attendance</h3>
                     <div class="form-group" style="max-width: 300px;">
                         <label for="attendance-subject">Subject</label>
                         <select class="form-control" id="attendance-subject">
@@ -227,11 +242,13 @@
             <form onsubmit="postAnnouncement(event)">
                 <div class="form-group">
                     <label for="ann-title">Title *</label>
-                    <input type="text" class="form-control" id="ann-title" placeholder="e.g., Class Cancelled Tomorrow" required>
+                    <input type="text" class="form-control" id="ann-title" placeholder="e.g., Class Cancelled Tomorrow"
+                        required>
                 </div>
                 <div class="form-group">
                     <label for="ann-message">Message *</label>
-                    <textarea class="form-control" id="ann-message" placeholder="Enter announcement details..." required></textarea>
+                    <textarea class="form-control" id="ann-message" placeholder="Enter announcement details..."
+                        required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="ann-priority">Priority</label>
@@ -251,7 +268,8 @@
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary btn-lg">Post Announcement</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('postAnnouncementModal')">Cancel</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('postAnnouncementModal')">Cancel</button>
                 </div>
             </form>
         </div>
@@ -267,7 +285,8 @@
             <form onsubmit="createAssignment(event)">
                 <div class="form-group">
                     <label for="asg-title">Assignment Title *</label>
-                    <input type="text" class="form-control" id="asg-title" placeholder="e.g., Binary Search Tree Implementation" required>
+                    <input type="text" class="form-control" id="asg-title"
+                        placeholder="e.g., Binary Search Tree Implementation" required>
                 </div>
                 <div class="form-group">
                     <label for="asg-subject">Subject *</label>
@@ -287,7 +306,8 @@
                 </div>
                 <div class="form-group">
                     <label for="asg-description">Description *</label>
-                    <textarea class="form-control" id="asg-description" placeholder="Assignment details and requirements..." required></textarea>
+                    <textarea class="form-control" id="asg-description"
+                        placeholder="Assignment details and requirements..." required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="asg-due">Due Date *</label>
@@ -299,7 +319,8 @@
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary btn-lg">Create Assignment</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createAssignmentModal')">Cancel</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createAssignmentModal')">Cancel</button>
                 </div>
             </form>
         </div>
@@ -353,7 +374,8 @@
                 </div>
                 <div class="form-group">
                     <label for="tt-faculty">Faculty Name *</label>
-                    <input type="text" class="form-control" id="tt-faculty" placeholder="e.g., Dr. Priya Singh" required>
+                    <input type="text" class="form-control" id="tt-faculty" placeholder="e.g., Dr. Priya Singh"
+                        required>
                 </div>
                 <div class="form-group">
                     <label for="tt-room">Room/Lab *</label>
@@ -361,11 +383,54 @@
                 </div>
                 <div class="form-group">
                     <label for="tt-reason">Reason for Change</label>
-                    <textarea class="form-control" id="tt-reason" placeholder="Optional: explain why timing is being updated"></textarea>
+                    <textarea class="form-control" id="tt-reason"
+                        placeholder="Optional: explain why timing is being updated"></textarea>
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary btn-lg">Update Schedule</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('editTimetableModal')">Cancel</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editTimetableModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Custom Alert Modal -->
+    <div id="sendAlertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📣 Send Alert to All Students</h2>
+                <button class="close-modal" onclick="closeModal('sendAlertModal')">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                This will send an email notification to <strong id="alert-modal-count"
+                    style="color: var(--accent-purple);">all</strong> registered students instantly.
+            </p>
+            <form onsubmit="sendCustomAlert(event)">
+                <div class="form-group">
+                    <label for="alert-type">Alert Type</label>
+                    <select class="form-control" id="alert-type">
+                        <option value="general">🔔 General Notice</option>
+                        <option value="exam">📋 Exam / Test Notice</option>
+                        <option value="holiday">🎉 Holiday / No Class</option>
+                        <option value="low_attendance">⚠️ Attendance Warning</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alert-title">Alert Title *</label>
+                    <input type="text" class="form-control" id="alert-title" placeholder="e.g., Internal Exam Schedule"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="alert-message">Message *</label>
+                    <textarea class="form-control" id="alert-message" rows="4"
+                        placeholder="Write the full message that students will receive in their email..."
+                        required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">📧 Send to All Students</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('sendAlertModal')">Cancel</button>
                 </div>
             </form>
         </div>
@@ -403,4 +468,5 @@
     <script src="js/data.js"></script>
     <script src="js/faculty.js"></script>
 </body>
+
 </html>

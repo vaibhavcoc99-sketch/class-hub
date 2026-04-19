@@ -11,6 +11,13 @@ const multer = require('multer');
 const User = require('./models/User');
 const Assignment = require('./models/Assignment');
 const Submission = require('./models/Submission');
+const {
+    sendBroadcast,
+    announcementTemplate,
+    assignmentTemplate,
+    timetableTemplate,
+    alertTemplate
+} = require('./emailService');
 
 const app = express();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -270,6 +277,173 @@ app.get('/api/submissions', async (req, res) => {
     } catch (error) {
         console.error('Fetch submissions error:', error);
         res.status(500).json({ success: false, message: 'Server error fetching submissions' });
+    }
+});
+
+// ---- Helper: Get all student emails from MongoDB ----
+async function getAllStudentEmails() {
+    const students = await User.find({ role: 'student' }, 'email name').lean();
+    return students;
+}
+
+// ============================================================
+//  📧  NOTIFICATION ROUTES
+// ============================================================
+
+// POST /api/notify/announcement
+// Body: { title, message, priority, audience, facultyName }
+app.post('/api/notify/announcement', async (req, res) => {
+    try {
+        const { title, message, priority = 'normal', audience = 'All Students', facultyName } = req.body;
+        if (!title || !message) {
+            return res.status(400).json({ success: false, message: 'Title and message are required' });
+        }
+
+        const students = await getAllStudentEmails();
+        if (students.length === 0) {
+            return res.json({ success: true, message: 'No registered students to notify', sentCount: 0 });
+        }
+
+        const emails = students.map(s => s.email);
+        const priorityLabels = { urgent: '🚨 URGENT', important: '⚠️ Important', normal: '📢 Announcement' };
+        const subjectLine = `${priorityLabels[priority] || '📢'}: ${title}`;
+        const html = announcementTemplate({ title, message, priority, audience, facultyName });
+
+        const { sentCount, errors } = await sendBroadcast(transporter, emails, subjectLine, html);
+
+        console.log(`📢 Announcement broadcast: "${title}" → ${sentCount} students`);
+        res.json({
+            success: true,
+            message: `Announcement emailed to ${sentCount} student(s)`,
+            sentCount,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (err) {
+        console.error('Announcement notify error:', err);
+        res.status(500).json({ success: false, message: 'Failed to send announcement emails' });
+    }
+});
+
+// POST /api/notify/assignment
+// Body: { title, subject, description, dueDate, totalMarks, facultyName }
+app.post('/api/notify/assignment', async (req, res) => {
+    try {
+        const { title, subject, description, dueDate, totalMarks, facultyName } = req.body;
+        if (!title || !subject) {
+            return res.status(400).json({ success: false, message: 'Title and subject are required' });
+        }
+
+        const students = await getAllStudentEmails();
+        if (students.length === 0) {
+            return res.json({ success: true, message: 'No registered students to notify', sentCount: 0 });
+        }
+
+        const emails = students.map(s => s.email);
+        const subjectLine = `📝 New Assignment: ${title} | ${subject}`;
+        const html = assignmentTemplate({ title, subject, description, dueDate, totalMarks, facultyName });
+
+        const { sentCount, errors } = await sendBroadcast(transporter, emails, subjectLine, html);
+
+        console.log(`📝 Assignment broadcast: "${title}" → ${sentCount} students`);
+        res.json({
+            success: true,
+            message: `Assignment notification sent to ${sentCount} student(s)`,
+            sentCount,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (err) {
+        console.error('Assignment notify error:', err);
+        res.status(500).json({ success: false, message: 'Failed to send assignment emails' });
+    }
+});
+
+// POST /api/notify/timetable
+// Body: { day, time, subject, faculty, room, reason, changedBy }
+app.post('/api/notify/timetable', async (req, res) => {
+    try {
+        const { day, time, subject, faculty, room, reason, changedBy } = req.body;
+        if (!day || !time || !subject) {
+            return res.status(400).json({ success: false, message: 'Day, time, and subject are required' });
+        }
+
+        const students = await getAllStudentEmails();
+        if (students.length === 0) {
+            return res.json({ success: true, message: 'No registered students to notify', sentCount: 0 });
+        }
+
+        const emails = students.map(s => s.email);
+        const subjectLine = `📅 Timetable Change: ${subject} — ${day} ${time}`;
+        const html = timetableTemplate({ day, time, subject, faculty, room, reason, changedBy });
+
+        const { sentCount, errors } = await sendBroadcast(transporter, emails, subjectLine, html);
+
+        console.log(`📅 Timetable broadcast: ${day} ${time} → ${sentCount} students`);
+        res.json({
+            success: true,
+            message: `Timetable change notified to ${sentCount} student(s)`,
+            sentCount,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (err) {
+        console.error('Timetable notify error:', err);
+        res.status(500).json({ success: false, message: 'Failed to send timetable emails' });
+    }
+});
+
+// POST /api/notify/alert
+// Body: { title, message, alertType, facultyName, targetEmails (optional array — omit to send to ALL students) }
+app.post('/api/notify/alert', async (req, res) => {
+    try {
+        const { title, message, alertType = 'general', facultyName, targetEmails } = req.body;
+        if (!title || !message) {
+            return res.status(400).json({ success: false, message: 'Title and message are required' });
+        }
+
+        let emails;
+        if (targetEmails && Array.isArray(targetEmails) && targetEmails.length > 0) {
+            // Send to specific students only
+            emails = targetEmails;
+        } else {
+            // Broadcast to all registered students
+            const students = await getAllStudentEmails();
+            emails = students.map(s => s.email);
+        }
+
+        if (emails.length === 0) {
+            return res.json({ success: true, message: 'No recipients found', sentCount: 0 });
+        }
+
+        const alertLabels = {
+            low_attendance: '⚠️ Attendance Alert',
+            exam:           '📋 Exam Notice',
+            holiday:        '🎉 Holiday Notice',
+            general:        '🔔 Notice'
+        };
+        const subjectLine = `${alertLabels[alertType] || '🔔'}: ${title}`;
+        const html = alertTemplate({ title, message, alertType, facultyName });
+
+        const { sentCount, errors } = await sendBroadcast(transporter, emails, subjectLine, html);
+
+        console.log(`🔔 Alert broadcast: "${title}" → ${sentCount} recipient(s)`);
+        res.json({
+            success: true,
+            message: `Alert sent to ${sentCount} recipient(s)`,
+            sentCount,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (err) {
+        console.error('Alert notify error:', err);
+        res.status(500).json({ success: false, message: 'Failed to send alert emails' });
+    }
+});
+
+// GET /api/notify/students-count — helpful to show faculty how many students will receive emails
+app.get('/api/notify/students-count', async (req, res) => {
+    try {
+        const count = await User.countDocuments({ role: 'student' });
+        res.json({ success: true, count });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to fetch student count' });
     }
 });
 
