@@ -35,44 +35,44 @@ const API_BASE = 'http://localhost:5001';
 
 const timetableData = {
     Monday: [
-        { time: '09:00 - 09:50', subject: 'Data Structures', faculty: 'Dr. Priya Singh', room: 'Room 301' },
-        { time: '10:00 - 10:50', subject: 'Database Management', faculty: 'Prof. Amit Kumar', room: 'Room 205' },
-        { time: '11:00 - 11:50', subject: 'Operating Systems', faculty: 'Dr. Rajesh Verma', room: 'Room 302' },
-        { time: '12:00 - 12:50', subject: 'Software Engineering', faculty: 'Dr. Neha Gupta', room: 'Room 201' },
-        { time: '12:50 - 01:40', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '01:40 - 03:30', subject: 'DBMS Lab', faculty: 'Prof. Amit Kumar', room: 'Lab 2' }
+        { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Abhishek Nagar', room: 'Lt 21' },
+        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
+        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
+        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' }
     ],
     Tuesday: [
-        { time: '09:00 - 09:50', subject: 'Computer Networks', faculty: 'Prof. Suresh Patel', room: 'Room 303' },
-        { time: '10:00 - 10:50', subject: 'Operating Systems', faculty: 'Dr. Rajesh Verma', room: 'Room 302' },
-        { time: '11:00 - 11:50', subject: 'Data Structures', faculty: 'Dr. Priya Singh', room: 'Room 301' },
-        { time: '12:00 - 12:50', subject: 'Mathematics-III', faculty: 'Prof. Anita Sharma', room: 'Room 104' },
-        { time: '12:50 - 01:40', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '01:40 - 03:30', subject: 'Data Structures Lab', faculty: 'Dr. Priya Singh', room: 'Lab 1' }
+        { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
+        { time: '10:50 - 12:30', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Python Lab', faculty: 'Ahmed Husan', room: 'Dbms lab' },
+        { time: '03:40 - 04:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' }
     ],
     Wednesday: [
-        { time: '09:00 - 09:50', subject: 'Software Engineering', faculty: 'Dr. Neha Gupta', room: 'Room 201' },
-        { time: '10:00 - 10:50', subject: 'Database Management', faculty: 'Prof. Amit Kumar', room: 'Room 205' },
-        { time: '11:00 - 11:50', subject: 'Computer Networks', faculty: 'Prof. Suresh Patel', room: 'Room 303' },
-        { time: '12:00 - 12:50', subject: 'Operating Systems', faculty: 'Dr. Rajesh Verma', room: 'Room 302' },
-        { time: '12:50 - 01:40', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '01:40 - 03:30', subject: 'OS Lab', faculty: 'Dr. Rajesh Verma', room: 'Lab 3' }
+        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
     ],
     Thursday: [
-        { time: '09:00 - 09:50', subject: 'Mathematics-III', faculty: 'Prof. Anita Sharma', room: 'Room 104' },
-        { time: '10:00 - 10:50', subject: 'Data Structures', faculty: 'Dr. Priya Singh', room: 'Room 301' },
-        { time: '11:00 - 11:50', subject: 'Software Engineering', faculty: 'Dr. Neha Gupta', room: 'Room 201' },
-        { time: '12:00 - 12:50', subject: 'Database Management', faculty: 'Prof. Amit Kumar', room: 'Room 205' },
-        { time: '12:50 - 01:40', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '01:40 - 03:30', subject: 'Computer Networks Lab', faculty: 'Prof. Suresh Patel', room: 'Lab 4' }
+        { time: '09:10 - 10:50', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
+        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
+        { time: '11:40 - 12:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Operating System Lab', faculty: 'Ass. Dipanshu Singh', room: 'PPS Lab' }
     ],
     Friday: [
-        { time: '09:00 - 09:50', subject: 'Operating Systems', faculty: 'Dr. Rajesh Verma', room: 'Room 302' },
-        { time: '10:00 - 10:50', subject: 'Computer Networks', faculty: 'Prof. Suresh Patel', room: 'Room 303' },
-        { time: '11:00 - 11:50', subject: 'Mathematics-III', faculty: 'Prof. Anita Sharma', room: 'Room 104' },
-        { time: '12:00 - 12:50', subject: 'Technical Communication', faculty: 'Prof. Kavita Rao', room: 'Room 102' },
-        { time: '12:50 - 01:40', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '01:40 - 03:30', subject: 'Software Engineering Lab', faculty: 'Dr. Neha Gupta', room: 'Lab 2' }
+        { time: '10:00 - 11:40', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
+        { time: '11:40 - 12:30', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
+    ],
+    Saturday: [
+        { time: '09:10 - 10:50', subject: 'OOps Lab', faculty: 'Dr.Manik', room: 'Os lab' },
+        { time: '10:50 - 12:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
     ]
 };
 
