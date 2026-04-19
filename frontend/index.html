@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassHub — Sign In to Your Classroom</title>
+    <meta name="description" content="ClassHub eliminates WhatsApp chaos. Centralized platform for teacher-student interaction, assignments, timetables, and attendance.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Left Panel — Branding -->
+        <div class="auth-left">
+            <div class="brand-title" id="brand-title">CLASSHUB</div>
+            <p class="brand-subtitle">Your classroom, organized. No more WhatsApp chaos — one platform for announcements, assignments, timetables &amp; attendance.</p>
+
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">📢</div>
+                    <span>Instant announcements &amp; notifications</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">📝</div>
+                    <span>Assignment tracking &amp; submissions</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">📅</div>
+                    <span>Live timetable updates</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">📊</div>
+                    <span>Attendance analytics &amp; insights</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">🔒</div>
+                    <span>Secure role-based access</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel — Auth Form -->
+        <div class="auth-right">
+            <div class="auth-form-wrapper">
+                <h2 id="auth-heading" class="gradient-text">Welcome Back</h2>
+                <p id="auth-description" class="auth-description">Sign in to continue to your dashboard</p>
+
+                <!-- Login/Signup Toggle -->
+                <div class="auth-toggle" id="auth-toggle">
+                    <button class="active" id="toggle-login" onclick="switchAuthMode('login')">Login</button>
+                    <button id="toggle-signup" onclick="switchAuthMode('signup')">Sign Up</button>
+                </div>
+
+                <!-- Role Selector (visible in signup) -->
+                <div class="role-selector" id="role-selector" style="display: none;">
+                    <div class="role-option active" id="role-student" onclick="selectRole('student')">
+                        <span class="role-icon">🎓</span>
+                        <span class="role-label">Student</span>
+                    </div>
+                    <div class="role-option" id="role-faculty" onclick="selectRole('faculty')">
+                        <span class="role-icon">👨‍🏫</span>
+                        <span class="role-label">Faculty</span>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" class="form-control" id="login-email" placeholder="you@university.edu" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" class="form-control" id="login-password" placeholder="Enter your password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg" id="login-btn">Sign In</button>
+                    </div>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="signup-form" style="display: none;" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" class="form-control" id="signup-name" placeholder="e.g. Rahul Sharma" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" class="form-control" id="signup-email" placeholder="you@university.edu" required>
+                    </div>
+                    <div class="form-group" id="signup-roll-group">
+                        <label for="signup-roll">Roll Number</label>
+                        <input type="text" class="form-control" id="signup-roll" placeholder="e.g. 2201001">
+                    </div>
+                    <div class="form-group" id="signup-dept-group" style="display: none;">
+                        <label for="signup-dept">Department</label>
+                        <input type="text" class="form-control" id="signup-dept" placeholder="e.g. Computer Science">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" class="form-control" id="signup-password" placeholder="Create a password (min 6 chars)" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-confirm">Confirm Password</label>
+                        <input type="password" class="form-control" id="signup-confirm" placeholder="Re-enter your password" required minlength="6">
+                    </div>
+
+                    <!-- OTP Section -->
+                    <div id="otp-section" style="display: none;">
+                        <div style="text-align: center; margin-bottom: 12px;">
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                We've sent a verification code to your email
+                            </p>
+                        </div>
+                        <div class="otp-inputs" id="otp-inputs">
+                            <input type="text" maxlength="1" required>
+                            <input type="text" maxlength="1" required>
+                            <input type="text" maxlength="1" required>
+                            <input type="text" maxlength="1" required>
+                            <input type="text" maxlength="1" required>
+                            <input type="text" maxlength="1" required>
+                        </div>
+                        <div style="text-align: center;">
+                            <button type="button" class="btn btn-ghost btn-sm" id="resend-otp" onclick="resendOtp()">Resend Code</button>
+                        </div>
+                    </div>
+
+                    <!-- CAPTCHA -->
+                    <div class="form-group" id="captcha-group">
+                        <label>Verify you're human</label>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <canvas id="captcha-canvas" width="140" height="44" style="border-radius: var(--radius-sm); border: 1px solid var(--border); flex-shrink: 0;"></canvas>
+                            <button type="button" class="btn btn-ghost btn-icon" onclick="generateCaptcha()" title="Refresh CAPTCHA" style="font-size: 1.3rem;">🔄</button>
+                        </div>
+                        <input type="text" class="form-control" id="captcha-input" placeholder="Enter the code above" required style="margin-top: 8px;">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="send-otp-btn" onclick="sendOtp()">Send OTP</button>
+                        <button type="submit" class="btn btn-primary btn-lg" id="signup-btn" style="display: none;">Create Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
