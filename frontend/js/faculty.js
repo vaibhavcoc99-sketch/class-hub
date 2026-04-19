@@ -399,34 +399,53 @@ function updateTimetable(e) {
     showToast('Timetable updated successfully!', 'success');
 }
 
-function openGradeModal(assignmentId) {
+async function openGradeModal(assignmentId) {
     const a = facultyAssignments.find(x => x.id === assignmentId);
     if (!a) return;
 
-    document.getElementById('grade-assignment-label').textContent = `${a.title} (${a.subject}) — ${a.submissions} submissions`;
-
+    document.getElementById('grade-assignment-label').textContent = `${a.title} (${a.subject})`;
     const body = document.getElementById('grade-submissions-body');
-    const submittedStudents = mockStudents.slice(0, Math.min(a.submissions, mockStudents.length));
-    body.innerHTML = submittedStudents.map(s => `
-        <tr>
-            <td>${s.rollNo}</td>
-            <td>${s.name}</td>
-            <td><span class="badge badge-success" style="font-size: 0.75rem;">Submitted</span></td>
-            <td>
-                <select class="form-control" style="max-width: 100px; padding: 6px 10px; font-size: 0.85rem;">
-                    <option value="">—</option>
-                    <option>A+</option>
-                    <option>A</option>
-                    <option>B+</option>
-                    <option>B</option>
-                    <option>C</option>
-                    <option>F</option>
-                </select>
-            </td>
-        </tr>
-    `).join('');
-
+    body.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading submissions...</td></tr>';
     openModal('gradeModal');
+
+    try {
+        const res = await fetch(`${API_BASE}/api/submissions?assignmentId=${assignmentId}`);
+        const data = await res.json();
+
+        if (data.success) {
+            if (data.submissions.length === 0) {
+                 body.innerHTML = '<tr><td colspan="4" style="text-align: center;">No submissions yet.</td></tr>';
+                 return;
+            }
+            body.innerHTML = data.submissions.map(s => {
+                const linkLabel = s.fileUrl ? `<a href="${API_BASE}${s.fileUrl}" target="_blank" class="btn btn-outline btn-sm">📄 View PDF</a>` :
+                                  (s.link ? `<a href="${s.link}" target="_blank" class="btn btn-outline btn-sm">🔗 Link</a>` : '<span style="color:var(--text-muted)">No file</span>');
+                return `
+                <tr>
+                    <td>-</td>
+                    <td>${s.studentName}</td>
+                    <td>
+                        ${linkLabel}
+                        <div style="margin-top: 6px;"><span class="badge badge-success" style="font-size: 0.70rem;">Submitted</span></div>
+                    </td>
+                    <td>
+                        <select class="form-control" style="max-width: 100px; padding: 6px 10px; font-size: 0.85rem;">
+                            <option value="">—</option>
+                            <option>A+</option>
+                            <option>A</option>
+                            <option>B+</option>
+                            <option>B</option>
+                            <option>C</option>
+                            <option>F</option>
+                        </select>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+    } catch (err) {
+        console.error(err);
+        body.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Failed to load submissions</td></tr>';
+    }
 }
 
 function saveGrades() {

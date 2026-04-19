@@ -30,13 +30,8 @@ const announcements = [
     { id: 6, title: 'Hackathon Registration Open', message: 'Annual college hackathon registration is now open. Team size: 3-4 members. Last date: April 26. Prize worth ₹50,000.', priority: 'normal', postedBy: 'Tech Club', time: '5 days ago', unread: false }
 ];
 
-const assignments = [
-    { id: 1, title: 'Operating Systems Mini Project', subject: 'Operating Systems', faculty: 'Dr. Rajesh Verma', description: 'Implement a process scheduling simulator using C/C++. Must include FCFS, SJF, and Round Robin algorithms. Submit code with documentation.', dueDate: 'Apr 22, 2026', submitted: false, status: 'pending' },
-    { id: 2, title: 'Database Design Project', subject: 'DBMS', faculty: 'Prof. Amit Kumar', description: 'Design a complete database for a library management system. Include ER diagram, normalization up to 3NF, and SQL queries.', dueDate: 'Apr 25, 2026', submitted: false, status: 'pending' },
-    { id: 3, title: 'Binary Search Tree Implementation', subject: 'Data Structures', faculty: 'Dr. Priya Singh', description: 'Implement BST with insertion, deletion, and all traversal methods. Include time complexity analysis.', dueDate: 'Apr 15, 2026', submitted: true, status: 'completed', grade: 'A' },
-    { id: 4, title: 'Software Engineering Case Study', subject: 'Software Engineering', faculty: 'Dr. Neha Gupta', description: 'Analyze a real-world software project failure. Create SRS document, identify issues, and propose solutions.', dueDate: 'Apr 28, 2026', submitted: false, status: 'pending' },
-    { id: 5, title: 'Computer Networks Lab Report', subject: 'Computer Networks', faculty: 'Prof. Suresh Patel', description: 'Submit lab report covering socket programming experiments. Include code, output screenshots, and performance analysis.', dueDate: 'Apr 30, 2026', submitted: false, status: 'pending' }
-];
+let assignments = []; // dynamically fetched from MongoDB
+const API_BASE = 'http://localhost:5001';
 
 const timetableData = {
     Monday: [
@@ -127,6 +122,51 @@ document.addEventListener('keydown', e => {
     }
 });
 
+// ---- API Functions ----
+
+async function fetchAssignments() {
+    try {
+        const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+        
+        // 1. Fetch all assignments
+        const asgRes = await fetch(`${API_BASE}/api/assignments`);
+        const asgData = await asgRes.json();
+        
+        // 2. Fetch submissions for current student
+        const subRes = await fetch(`${API_BASE}/api/submissions?studentId=${user.id}`);
+        const subData = await subRes.json();
+        
+        const submittedAssignmentIds = new Set();
+        if (subData.success) {
+            subData.submissions.forEach(s => submittedAssignmentIds.add(s.assignmentId));
+        }
+
+        if (asgData.success) {
+            assignments = asgData.assignments.map(a => {
+                const isSubmitted = submittedAssignmentIds.has(a._id);
+                return {
+                    id: a._id,
+                    title: a.title,
+                    subject: a.course,
+                    faculty: a.facultyName || 'Faculty',
+                    description: a.description,
+                    dueDate: a.deadline,
+                    submitted: isSubmitted,
+                    status: isSubmitted ? 'completed' : 'pending'
+                };
+            });
+            
+            // Re-render UI components dependent on assignments
+            renderUpcomingDeadlines();
+            renderAllAssignments();
+            updateStats();
+        }
+    } catch (err) {
+        console.error('Failed to fetch assignments', err);
+        showToast('Error loading assignments from server', 'error');
+    }
+}
+
 // ---- Render Functions ----
 
 function renderTodaySchedule() {
@@ -195,7 +235,7 @@ function renderAllAssignments() {
             : `<span class="badge badge-warning">⏳ Pending</span>`;
         const actionBtn = a.submitted
             ? ''
-            : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal(${a.id})">Submit →</button>`;
+            : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal('${a.id}')">Submit →</button>`;
         return `
             <div class="assignment-card">
                 <div class="assignment-header">
@@ -270,9 +310,13 @@ function updateStats() {
 
 // ---- Assignment Submission ----
 let currentSubmitId = null;
+let selectedFile = null;
 
 function openSubmitModal(id) {
     currentSubmitId = id;
+    selectedFile = null;
+    clearFile();
+    
     const a = assignments.find(x => x.id === id);
     if (!a) return;
     document.getElementById('submit-assignment-title').value = a.title + ' (' + a.subject + ')';
@@ -281,18 +325,122 @@ function openSubmitModal(id) {
     openModal('submitAssignmentModal');
 }
 
-function submitAssignment(e) {
-    e.preventDefault();
-    const a = assignments.find(x => x.id === currentSubmitId);
-    if (a) {
-        a.submitted = true;
-        a.status = 'completed';
+// Drag & Drop Functionality
+function setupDropZone() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    if (!dropZone || !fileInput) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
-    closeModal('submitAssignmentModal');
-    renderAllAssignments();
-    renderUpcomingDeadlines();
-    updateStats();
-    showToast('Assignment submitted successfully!', 'success');
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+}
+
+function handleFiles(files) {
+    if (files.length > 0) {
+        const file = files[0];
+        if (file.type === 'application/pdf') {
+            selectedFile = file;
+            document.querySelector('.drop-zone-content').style.display = 'none';
+            document.getElementById('file-display').style.display = 'block';
+            document.getElementById('file-name-display').textContent = file.name;
+        } else {
+            showToast('Please upload a PDF file only', 'warning');
+        }
+    }
+}
+
+function clearFile() {
+    selectedFile = null;
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.value = '';
+    
+    const dropZoneContent = document.querySelector('.drop-zone-content');
+    const fileDisplay = document.getElementById('file-display');
+    
+    if (dropZoneContent) dropZoneContent.style.display = 'block';
+    if (fileDisplay) fileDisplay.style.display = 'none';
+}
+
+async function submitAssignment(e) {
+    e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const link = document.getElementById('submission-link').value;
+    const notes = document.getElementById('submission-notes').value;
+
+    if (!selectedFile && !link) {
+        showToast('Please upload a PDF or provide a link', 'warning');
+        return;
+    }
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('assignmentId', currentSubmitId);
+        formData.append('studentId', user.id);
+        formData.append('studentName', user.name);
+        formData.append('link', link);
+        formData.append('notes', notes);
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
+
+        const res = await fetch(`${API_BASE}/api/submissions`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Assignment';
+        }
+
+        if (data.success) {
+            closeModal('submitAssignmentModal');
+            showToast('Assignment submitted successfully!', 'success');
+            await fetchAssignments(); // Re-fetch to update status flags globally
+        } else {
+            showToast(data.message || 'Error submitting assignment', 'error');
+        }
+    } catch (err) {
+        console.error('Submit error:', err);
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Assignment';
+        }
+        showToast('Network error while submitting', 'error');
+    }
 }
 
 // ---- Charts ----
@@ -416,4 +564,9 @@ document.addEventListener('DOMContentLoaded', function () {
     renderAllAssignments();
     renderFullTimetable();
     renderAttendanceBreakdown();
+    
+    setupDropZone();
+    
+    // Fetch from MongoDB
+    fetchAssignments();
 });

@@ -186,9 +186,29 @@
                     <label>Assignment</label>
                     <input type="text" class="form-control" id="submit-assignment-title" readonly>
                 </div>
+                
                 <div class="form-group">
-                    <label for="submission-link">Submission Link (Google Drive / GitHub) *</label>
-                    <input type="url" class="form-control" id="submission-link" placeholder="https://drive.google.com/..." required>
+                    <label>Upload PDF Document *</label>
+                    <div id="drop-zone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📄</div>
+                            <p>Drag & drop your PDF here</p>
+                            <span class="or-text">or</span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                            <input type="file" id="file-input" accept="application/pdf" hidden>
+                        </div>
+                        <div id="file-display" style="display: none;">
+                            <div class="file-info">
+                                <span class="file-name" id="file-name-display">my_assignment.pdf</span>
+                                <button type="button" class="close-modal" onclick="clearFile()" style="position: relative; right: 0; top: 0; padding: 0 5px; color: var(--danger);">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="submission-link">Optional Link (GitHub / Drive)</label>
+                    <input type="url" class="form-control" id="submission-link" placeholder="https://github.com/...">
                 </div>
                 <div class="form-group">
                     <label for="submission-notes">Notes (optional)</label>

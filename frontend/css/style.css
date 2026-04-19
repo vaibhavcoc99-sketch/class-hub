@@ -1453,3 +1453,51 @@ tbody tr:hover {
         flex-direction: column;
     }
 }
+
+/* --- Drag and Drop File Upload --- */
+.drop-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.4);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.drop-zone.dragover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary);
+    transform: scale(1.02);
+}
+
+.drop-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.or-text {
+    display: block;
+    margin: 10px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.file-name {
+    font-weight: 500;
+    word-break: break-all;
+}

@@ -7,10 +7,22 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const User = require('./models/User');
 const Assignment = require('./models/Assignment');
+const Submission = require('./models/Submission');
 
 const app = express();
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Configure Multer for File Uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+const upload = multer({ storage });
 const PORT = process.env.PORT || 5001;
 
 // ---- Middleware ----
@@ -219,6 +231,45 @@ app.get('/api/assignments', async (req, res) => {
     } catch (error) {
         console.error('Fetch assignments error:', error);
         res.status(500).json({ success: false, message: 'Server error fetching assignments' });
+    }
+});
+
+// ---- Submission Routes ----
+
+// POST /api/submissions
+app.post('/api/submissions', upload.single('file'), async (req, res) => {
+    try {
+        const { assignmentId, studentId, studentName, link, notes } = req.body;
+        
+        if (!assignmentId || !studentId) {
+            return res.status(400).json({ success: false, message: 'Assignment ID and Student ID are required' });
+        }
+
+        const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+        const submission = await Submission.create({
+            assignmentId, studentId, studentName, link, fileUrl, notes
+        });
+
+        res.status(201).json({ success: true, message: 'Assignment submitted successfully', submission });
+    } catch (error) {
+        console.error('Submit assignment error:', error);
+        res.status(500).json({ success: false, message: 'Server error submitting assignment' });
+    }
+});
+
+// GET /api/submissions
+app.get('/api/submissions', async (req, res) => {
+    try {
+        const query = {};
+        if (req.query.studentId) query.studentId = req.query.studentId;
+        if (req.query.assignmentId) query.assignmentId = req.query.assignmentId;
+
+        const submissions = await Submission.find(query);
+        res.json({ success: true, submissions });
+    } catch (error) {
+        console.error('Fetch submissions error:', error);
+        res.status(500).json({ success: false, message: 'Server error fetching submissions' });
     }
 });
 
