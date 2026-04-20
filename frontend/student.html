@@ -156,33 +156,47 @@
 
         <!-- ===== Analytics Tab ===== -->
         <div id="analytics" class="tab-content">
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Attendance by Subject</h2>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="attendance-chart"></canvas>
-                    </div>
+            <!-- Internal Marks Bar Chart (full width) -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Internal Marks Overview</h2>
                 </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Assignment Progress</h2>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="assignments-chart"></canvas>
-                    </div>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="marks-bar-chart"></canvas>
                 </div>
             </div>
+
+            <!-- Internal Marks Table (full width) -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Subject-wise Attendance Breakdown</h2>
+                    <h2 class="card-title">📋 Subject-wise Internal Marks</h2>
                 </div>
-                <div id="attendance-breakdown">
-                    <!-- Filled by JS -->
+                <div id="internal-marks-loading" style="text-align:center; padding:30px; color:var(--text-muted);">
+                    ⏳ Loading marks…
+                </div>
+                <div class="table-container" id="internal-marks-table-wrap" style="display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th style="text-align:center;">CT-1</th>
+                                <th style="text-align:center;">CT-2</th>
+                                <th style="text-align:center;">Assignment<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                                <th style="text-align:center;">Attendance<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                            </tr>
+                        </thead>
+                        <tbody id="internal-marks-body">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="internal-marks-empty" style="display:none; text-align:center; padding:30px; color:var(--text-muted);">
+                    <div style="font-size:2.5rem; margin-bottom:10px;">📊</div>
+                    <p>No marks have been entered by your faculty yet.</p>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Submit Assignment Modal -->

@@ -747,18 +747,128 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3200);
 }
 
+// ============================================================
+//  📊  INTERNAL MARKS — Faculty Entry Functions
+// ============================================================
+
+// Load existing marks for selected subject (or blank table for new entry)
+async function loadInternalMarks() {
+    const subject = document.getElementById('marks-subject').value;
+    if (!subject) {
+        showToast('Please select a subject first', 'warning');
+        return;
+    }
+
+    const tableContainer = document.getElementById('marks-table-container');
+    const emptyState     = document.getElementById('marks-empty');
+    const hint           = document.getElementById('marks-hint');
+    const saveBtn        = document.getElementById('save-marks-btn');
+    const tbody          = document.getElementById('marks-table-body');
+
+    // Show loading state
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">⏳ Loading…</td></tr>';
+    tableContainer.style.display = 'block';
+    emptyState.style.display     = 'none';
+    hint.style.display           = 'block';
+    saveBtn.style.display        = 'inline-flex';
+
+    // Try to fetch already-saved marks for this subject
+    let savedMarksMap = {};
+    try {
+        const res = await fetch(`${API_BASE}/api/internal-marks?subject=${encodeURIComponent(subject)}`);
+        const data = await res.json();
+        if (data.success && data.marks.length > 0) {
+            data.marks.forEach(m => { savedMarksMap[m.rollNo] = m; });
+        }
+    } catch (err) {
+        console.warn('Could not load saved marks:', err);
+    }
+
+    // Render a row for every student in the class
+    tbody.innerHTML = GLOBAL_STUDENT_LIST.map(s => {
+        const saved = savedMarksMap[s.rollNo] || {};
+        const v = (val) => (val !== null && val !== undefined) ? val : '';
+        return `
+            <tr data-roll="${s.rollNo}">
+                <td>${s.rollNo}</td>
+                <td>${s.name}</td>
+                <td><input type="number" class="marks-input" data-field="ct1" min="0" step="0.5"
+                    placeholder="—" value="${v(saved.ct1)}"
+                    style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
+                <td><input type="number" class="marks-input" data-field="ct2" min="0" step="0.5"
+                    placeholder="—" value="${v(saved.ct2)}"
+                    style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
+                <td><input type="number" class="marks-input" data-field="assignmentMarks" min="0" max="5" step="0.5"
+                    placeholder="0-5" value="${v(saved.assignmentMarks)}"
+                    style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
+                <td><input type="number" class="marks-input" data-field="attendanceMarks" min="0" max="5" step="0.5"
+                    placeholder="0-5" value="${v(saved.attendanceMarks)}"
+                    style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
+            </tr>`;
+    }).join('');
+
+    showToast(`✅ Loaded marks for "${subject}"`, 'success');
+}
+
+// Collect input values and POST to backend
+async function saveInternalMarks() {
+    const subject = document.getElementById('marks-subject').value;
+    if (!subject) { showToast('No subject selected', 'warning'); return; }
+
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const rows = document.querySelectorAll('#marks-table-body tr[data-roll]');
+    const marks = [];
+
+    rows.forEach(row => {
+        const rollNo = row.getAttribute('data-roll');
+        const student = GLOBAL_STUDENT_LIST.find(s => s.rollNo === rollNo);
+        const inputs = row.querySelectorAll('.marks-input');
+        const parse = (inp) => inp.value.trim() === '' ? null : parseFloat(inp.value);
+        marks.push({
+            rollNo,
+            name: student ? student.name : '',
+            ct1:             parse(inputs[0]),
+            ct2:             parse(inputs[1]),
+            assignmentMarks: parse(inputs[2]),
+            attendanceMarks: parse(inputs[3])
+        });
+    });
+
+    const saveBtn = document.getElementById('save-marks-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Saving…'; }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/internal-marks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject, facultyName: user.name || 'Faculty', marks })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`📊 Marks saved for "${subject}"!`, 'success');
+        } else {
+            showToast(data.message || 'Failed to save marks', 'error');
+        }
+    } catch (err) {
+        console.error('Save marks error:', err);
+        showToast('Network error while saving marks', 'error');
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save Marks'; }
+    }
+}
+
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async function () {
     updateStats();
     renderRecentActivity();
     renderFacultyAnnouncements();
     renderFacultyTimetable();
-    
+
     // Core data fetches
     await fetchFacultyStats(); // Loads students & attendance mapping completely
-    await fetchAssignments(); // Loads assignments dynamically from MongoDB
-    await fetchTimetable();   // Loads timetable from MongoDB
-    initSubjectDropdown(); // Restrict subject choices to this faculty's subjects
+    await fetchAssignments();  // Loads assignments dynamically from MongoDB
+    await fetchTimetable();    // Loads timetable from MongoDB
+    initSubjectDropdown();     // Restrict subject choices to this faculty's subjects
 
     // Update global dashboard stats immediately after fetches
     updateStats();

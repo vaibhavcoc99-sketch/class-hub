@@ -15,6 +15,7 @@ const Announcement = require('./models/Announcement');
 const Timetable = require('./models/Timetable');
 const AttendanceSession = require('./models/AttendanceSession');
 const StudentStats = require('./models/StudentStats');
+const InternalMarks = require('./models/InternalMarks');
 const {
     sendBroadcast,
     announcementTemplate,
@@ -560,6 +561,66 @@ app.put('/api/timetable/slot', async (req, res) => {
     } catch (err) {
         console.error('Update timetable error:', err);
         res.status(500).json({ success: false, message: 'Failed to update timetable' });
+    }
+});
+
+// ============================================================
+//  📊  INTERNAL MARKS ROUTES (MongoDB-backed)
+// ============================================================
+
+// GET /api/internal-marks?subject=X  — load saved marks for a subject (faculty view)
+app.get('/api/internal-marks', async (req, res) => {
+    try {
+        const { subject } = req.query;
+        if (!subject) return res.status(400).json({ success: false, message: 'Subject is required' });
+        const doc = await InternalMarks.findOne({ subject });
+        res.json({ success: true, marks: doc ? doc.marks : [] });
+    } catch (err) {
+        console.error('Fetch internal marks error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/internal-marks/student/:rollNo  — all subjects' marks for one student
+app.get('/api/internal-marks/student/:rollNo', async (req, res) => {
+    try {
+        const { rollNo } = req.params;
+        const allDocs = await InternalMarks.find({});
+        const result = allDocs.map(doc => {
+            const m = (doc.marks || []).find(s => s.rollNo === rollNo);
+            return {
+                subject: doc.subject,
+                ct1:             m ? m.ct1             : null,
+                ct2:             m ? m.ct2             : null,
+                assignmentMarks: m ? m.assignmentMarks : null,
+                attendanceMarks: m ? m.attendanceMarks : null
+            };
+        });
+        res.json({ success: true, marks: result });
+    } catch (err) {
+        console.error('Fetch student internal marks error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// POST /api/internal-marks  — save/overwrite marks for a subject
+// Body: { subject, facultyName, marks: [{rollNo, name, ct1, ct2, assignmentMarks, attendanceMarks}] }
+app.post('/api/internal-marks', async (req, res) => {
+    try {
+        const { subject, facultyName, marks } = req.body;
+        if (!subject || !Array.isArray(marks)) {
+            return res.status(400).json({ success: false, message: 'subject and marks[] required' });
+        }
+        const doc = await InternalMarks.findOneAndUpdate(
+            { subject },
+            { subject, facultyName, marks },
+            { upsert: true, new: true, runValidators: true }
+        );
+        console.log(`📊 Internal marks saved for: ${subject} (${marks.length} students)`);
+        res.json({ success: true, message: 'Marks saved successfully', doc });
+    } catch (err) {
+        console.error('Save internal marks error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 

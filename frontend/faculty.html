@@ -36,6 +36,7 @@
             <button class="nav-btn" onclick="switchTab('assignments')">📝 Assignments</button>
             <button class="nav-btn" onclick="switchTab('timetable')">📅 Timetable</button>
             <button class="nav-btn" onclick="switchTab('attendance')">✅ Attendance</button>
+            <button class="nav-btn" onclick="switchTab('internal-marks')">📊 Internal Marks</button>
         </nav>
 
         <!-- ===== Overview Tab ===== -->
@@ -227,6 +228,68 @@
                         <button class="btn btn-success" onclick="saveAttendance()">Save Attendance</button>
                         <button class="btn btn-secondary" onclick="toggleAttendanceMode()">Cancel</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Internal Marks Tab ===== -->
+        <div id="internal-marks" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Internal Marks</h2>
+                </div>
+
+                <!-- Subject Selector + Load Button -->
+                <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 24px;">
+                    <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
+                        <label for="marks-subject">Select Subject *</label>
+                        <select class="form-control" id="marks-subject">
+                            <option value="">Choose Subject</option>
+                            <option>Mini Project</option>
+                            <option>Technical Communication</option>
+                            <option>Sensor &amp; Instrumentation</option>
+                            <option>Operating System</option>
+                            <option>Ethical Research</option>
+                            <option>Automata</option>
+                            <option>Python</option>
+                            <option>OOps in java</option>
+                            <option>Operating System Lab</option>
+                            <option>OOps Lab</option>
+                            <option>Python Lab</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadInternalMarks()">📂 Load / New</button>
+                    <button class="btn btn-success" id="save-marks-btn" onclick="saveInternalMarks()" style="display:none;">💾 Save Marks</button>
+                </div>
+
+                <!-- Marks Entry Hint -->
+                <p id="marks-hint" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px; display:none;">
+                    CT-1 &amp; CT-2 — enter marks obtained. Assignment &amp; Attendance — out of 5.
+                </p>
+
+                <!-- Marks Table -->
+                <div class="table-container" id="marks-table-container" style="display:none;">
+                    <table id="marks-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:130px;">Roll No.</th>
+                                <th>Name</th>
+                                <th style="min-width:90px;">CT-1</th>
+                                <th style="min-width:90px;">CT-2</th>
+                                <th style="min-width:100px;">Assignment<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                                <th style="min-width:100px;">Attendance<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                            </tr>
+                        </thead>
+                        <tbody id="marks-table-body">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div id="marks-empty" style="text-align:center; padding: 40px; color: var(--text-muted);">
+                    <div style="font-size:3rem; margin-bottom:12px;">📊</div>
+                    <p>Select a subject above and click <strong>Load / New</strong> to enter marks.</p>
                 </div>
             </div>
         </div>

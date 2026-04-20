@@ -49,8 +49,8 @@ function switchTab(tabName) {
     });
     if (btn) btn.classList.add('active');
 
-    // Lazy init charts
-    if (tabName === 'analytics') initCharts();
+    // Lazy-load internal marks when analytics tab is opened
+    if (tabName === 'analytics') fetchInternalMarks();
 
     // When switching to announcements tab, mark visible ones as read after a small delay
     if (tabName === 'announcements') {
@@ -394,7 +394,7 @@ function renderTodaySchedule() {
     `).join('');
 }
 
-// Fetch attendance summary from MongoDB
+// Fetch attendance summary from MongoDB (still used for the stat card %)
 async function fetchStudentAttendance() {
     try {
         const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
@@ -402,16 +402,10 @@ async function fetchStudentAttendance() {
 
         const res = await fetch(`${API_BASE}/api/attendance/summary?rollNo=${user.rollNo}`);
         const data = await res.json();
-        
+
         if (data.success && data.stats) {
             attendanceData = data.stats;
-            renderAttendanceBreakdown();
             updateStats();
-            
-            // Re-render chart if we are on the analytics tab
-            if (document.getElementById('analytics').classList.contains('active')) {
-                initCharts();
-            }
         }
     } catch (err) {
         console.error('Failed to fetch attendance:', err);
@@ -505,27 +499,178 @@ function renderFullTimetable() {
     container.innerHTML = html;
 }
 
-function renderAttendanceBreakdown() {
-    const container = document.getElementById('attendance-breakdown');
-    if (attendanceData.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No attendance records found yet.</div>';
+// ─── Internal Marks ─────────────────────────────────────────
+let internalMarksData = []; // [{subject, ct1, ct2, assignmentMarks, attendanceMarks}]
+let marksBarChartInstance = null;
+
+async function fetchInternalMarks() {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    if (!user.rollNo) return;
+
+    const loading = document.getElementById('internal-marks-loading');
+    const tableWrap = document.getElementById('internal-marks-table-wrap');
+    const emptyEl  = document.getElementById('internal-marks-empty');
+
+    if (loading) loading.style.display = 'block';
+    if (tableWrap) tableWrap.style.display = 'none';
+    if (emptyEl)  emptyEl.style.display  = 'none';
+
+    try {
+        const res  = await fetch(`${API_BASE}/api/internal-marks/student/${user.rollNo}`);
+        const data = await res.json();
+
+        if (data.success) {
+            // Only keep subjects that have at least one mark entered
+            internalMarksData = data.marks.filter(
+                m => m.ct1 !== null || m.ct2 !== null ||
+                     m.assignmentMarks !== null || m.attendanceMarks !== null
+            );
+            renderInternalMarksTable();
+            renderMarksBarChart();
+        }
+    } catch (err) {
+        console.error('Failed to fetch internal marks:', err);
+        if (loading) loading.style.display = 'none';
+        if (emptyEl) { emptyEl.style.display = 'block'; }
+    }
+}
+
+function renderInternalMarksTable() {
+    const loading  = document.getElementById('internal-marks-loading');
+    const tableWrap = document.getElementById('internal-marks-table-wrap');
+    const emptyEl   = document.getElementById('internal-marks-empty');
+    const tbody     = document.getElementById('internal-marks-body');
+
+    if (loading) loading.style.display = 'none';
+
+    if (!internalMarksData || internalMarksData.length === 0) {
+        if (tableWrap) tableWrap.style.display = 'none';
+        if (emptyEl)  emptyEl.style.display  = 'block';
         return;
     }
-    container.innerHTML = attendanceData.map(a => {
-        const colorClass = a.percent >= 85 ? '' : a.percent >= 75 ? 'warning' : 'danger';
-        const textColor = a.percent >= 85 ? 'var(--success-light)' : a.percent >= 75 ? 'var(--warning)' : 'var(--danger-light)';
-        return `
-            <div class="progress-container">
-                <div class="progress-header">
-                    <span class="subject-name">${a.subject}</span>
-                    <span class="percent" style="color: ${textColor}">${a.percent}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill ${colorClass}" style="width: ${a.percent}%"></div>
-                </div>
-            </div>
-        `;
-    }).join('');
+
+    if (tableWrap) tableWrap.style.display = 'block';
+    if (emptyEl)  emptyEl.style.display  = 'none';
+
+    const fmt = (v) => (v !== null && v !== undefined) ? v : '—';
+
+    tbody.innerHTML = internalMarksData.map(m => `
+        <tr>
+            <td><strong>${m.subject}</strong></td>
+            <td style="text-align:center;">${fmt(m.ct1)}</td>
+            <td style="text-align:center;">${fmt(m.ct2)}</td>
+            <td style="text-align:center;">
+                <span style="color:${m.assignmentMarks >= 4 ? 'var(--success-light)' : m.assignmentMarks >= 3 ? 'var(--warning)' : 'var(--text-primary)'}">
+                    ${fmt(m.assignmentMarks)}/5
+                </span>
+            </td>
+            <td style="text-align:center;">
+                <span style="color:${m.attendanceMarks >= 4 ? 'var(--success-light)' : m.attendanceMarks >= 3 ? 'var(--warning)' : 'var(--text-primary)'}">
+                    ${fmt(m.attendanceMarks)}/5
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderMarksBarChart() {
+    const canvas = document.getElementById('marks-bar-chart');
+    if (!canvas) return;
+
+    if (marksBarChartInstance) {
+        marksBarChartInstance.destroy();
+        marksBarChartInstance = null;
+    }
+
+    if (!internalMarksData || internalMarksData.length === 0) {
+        canvas.parentElement.innerHTML = `
+            <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                <div style="font-size:2.5rem; margin-bottom:10px;">📊</div>
+                <p>No marks data available yet.</p>
+            </div>`;
+        return;
+    }
+
+    const labels = internalMarksData.map(m => m.subject);
+    const ct1Data  = internalMarksData.map(m => m.ct1 !== null ? m.ct1 : 0);
+    const ct2Data  = internalMarksData.map(m => m.ct2 !== null ? m.ct2 : 0);
+    const asgData  = internalMarksData.map(m => m.assignmentMarks !== null ? m.assignmentMarks : 0);
+    const attData  = internalMarksData.map(m => m.attendanceMarks !== null ? m.attendanceMarks : 0);
+
+    marksBarChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'CT-1',
+                    data: ct1Data,
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                },
+                {
+                    label: 'CT-2',
+                    data: ct2Data,
+                    backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    borderColor: 'rgba(168, 85, 247, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Assignment (out of 5)',
+                    data: asgData,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Attendance (out of 5)',
+                    data: attData,
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                    borderColor: 'rgba(245, 158, 11, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#94a3b8',
+                        padding: 16,
+                        font: { size: 12, family: "'Inter', sans-serif" }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    borderColor: 'rgba(99,102,241,0.3)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 12
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#64748b', font: { size: 11 } },
+                    grid:  { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#64748b', font: { size: 11 } },
+                    grid:  { color: 'rgba(255,255,255,0.05)' }
+                }
+            }
+        }
+    });
 }
 
 function updateStats() {
@@ -684,97 +829,7 @@ async function submitAssignment(e) {
     }
 }
 
-// ---- Charts ----
-let chartsInitialized = false;
-let attendanceChartInstance = null;
-
-function initCharts() {
-    if (attendanceChartInstance) {
-        attendanceChartInstance.destroy();
-    }
-
-    const attCtx = document.getElementById('attendance-chart');
-    if (!attCtx) return;
-    
-    let labels = ['No Data Yet'];
-    let dataPoints = [100];
-    let colors = ['rgba(255, 255, 255, 0.1)'];
-    let borders = ['rgba(255, 255, 255, 0.2)'];
-
-    if (attendanceData.length > 0) {
-        labels = attendanceData.map(a => a.subject);
-        dataPoints = attendanceData.map(a => a.percent);
-        colors = attendanceData.map(a => 
-            a.percent >= 85 ? 'rgba(46, 213, 115, 0.8)' : 
-            a.percent >= 75 ? 'rgba(255, 165, 2, 0.8)' : 
-            'rgba(255, 71, 87, 0.8)'
-        );
-        borders = attendanceData.map(a => 
-            a.percent >= 85 ? 'rgba(46, 213, 115, 1)' : 
-            a.percent >= 75 ? 'rgba(255, 165, 2, 1)' : 
-            'rgba(255, 71, 87, 1)'
-        );
-    }
-
-    attendanceChartInstance = new Chart(attCtx.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: dataPoints,
-                backgroundColor: colors,
-                borderColor: borders,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '75%',
-            plugins: {
-                legend: { position: 'right', labels: { color: 'var(--text-primary)', font: { family: "'Inter', sans-serif" } } }
-            }
-        }
-    });
-
-    // Assignment Progress Doughnut
-    const submitted = assignments.filter(a => a.submitted).length;
-    const pending = assignments.filter(a => !a.submitted).length;
-    const asgCtx = document.getElementById('assignments-chart').getContext('2d');
-    new Chart(asgCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Submitted', 'Pending'],
-            datasets: [{
-                data: [submitted, pending],
-                backgroundColor: ['rgba(16,185,129,0.8)', 'rgba(245,158,11,0.8)'],
-                borderColor: ['#10b981', '#f59e0b'],
-                borderWidth: 2,
-                hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#94a3b8', padding: 20, font: { size: 13 } }
-                },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#94a3b8',
-                    borderColor: 'rgba(99,102,241,0.3)',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    padding: 12
-                }
-            }
-        }
-    });
-}
+// (Old initCharts removed — replaced by renderMarksBarChart above)
 
 // ---- Toast ----
 function showToast(message, type = 'info') {
@@ -796,13 +851,12 @@ document.addEventListener('DOMContentLoaded', function () {
     renderAllAnnouncements();
     renderAllAssignments();
     renderFullTimetable();
-    renderAttendanceBreakdown();
-    
+
     setupDropZone();
-    
+
     // Fetch from MongoDB
     fetchAnnouncements();
     fetchAssignments();
     fetchTimetable();
-    fetchStudentAttendance(); // Load real attendance
+    fetchStudentAttendance(); // Used for the attendance % stat card
 });
