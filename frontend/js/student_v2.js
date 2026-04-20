@@ -55,6 +55,11 @@ function switchTab(tabName) {
         fetchStudentAttendance();
     }
 
+    // Re-render when switching to relevant tabs
+    if (tabName === 'timetable') {
+        fetchTimetable(); // always re-fetch to ensure data is populated
+    }
+
     // When switching to announcements tab, mark visible ones as read after a small delay
     if (tabName === 'announcements') {
         setTimeout(() => observeUnreadBubbles(), 400);
@@ -408,6 +413,7 @@ function renderTodaySchedule() {
     const today = days[new Date().getDay()];
     const slots = timetableData[today];
     const container = document.getElementById('today-schedule');
+    if (!container) return; // element may have been removed
 
     const scheduleTitle = container.closest('.card');
     if (scheduleTitle) {
@@ -443,7 +449,7 @@ function renderTodaySchedule() {
 // Fetch timetable from MongoDB
 async function fetchTimetable() {
     try {
-        const res = await fetch(`${API_BASE}/api/timetable`);
+        const res = await fetch(`${API_BASE}/api/timetable?_t=${Date.now()}`);
         const data = await res.json();
         if (data.success && data.timetable) {
             const tt = data.timetable;
@@ -459,6 +465,7 @@ async function fetchTimetable() {
             await fetchSuspendedSlotsStudent();
             renderTodaySchedule();
             renderFullTimetable();
+            renderOverviewTodaySchedule();
         }
     } catch (err) {
         console.error('Failed to fetch timetable:', err);
@@ -486,7 +493,50 @@ function renderFullTimetable() {
             </div>`;
         }).join('');
     }
-    container.innerHTML = html;
+    if (container) container.innerHTML = html || '<div style="text-align:center; padding:30px; color:var(--text-muted);">No timetable available.</div>';
+}
+
+// Render TODAY's schedule into the Overview tab card (auto-updates by day)
+function renderOverviewTodaySchedule() {
+    const container = document.getElementById('overview-today-schedule');
+    if (!container) return;
+
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const today = days[new Date().getDay()];
+
+    // Update the card title to show the current day
+    const titleEl = document.getElementById('overview-today-title');
+    if (titleEl) titleEl.textContent = `📅 Today's Schedule — ${today}`;
+
+    const slots = timetableData[today] || [];
+
+    if (slots.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding:30px; color:var(--text-muted);">
+                <div style="font-size:2.5rem; margin-bottom:10px;">🎉</div>
+                <p style="font-size:1rem; font-weight:600;">No classes today!</p>
+                <p style="font-size:0.85rem; margin-top:6px; opacity:0.7;">Enjoy your ${today}.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = slots.map(slot => {
+        const isSuspended = isSlotSuspended(today, slot);
+
+        // Suspended: faded out + strikethrough on all text
+        const wrapStyle    = isSuspended ? 'opacity:0.4; filter:grayscale(0.8);' : '';
+        const strikeThroughStyle = isSuspended ? 'text-decoration:line-through; text-decoration-color:rgba(239,68,68,0.8); color:var(--text-muted);' : '';
+
+        return `
+        <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}" style="${wrapStyle}">
+            <div class="slot-time" style="${strikeThroughStyle}">${slot.time}</div>
+            <div class="slot-details">
+                <div class="slot-subject" style="${strikeThroughStyle}">${slot.subject}</div>
+                ${slot.faculty ? `<div class="slot-faculty" style="${strikeThroughStyle}">${slot.faculty} <span class="slot-room">${slot.room}</span></div>` : ''}
+                ${isSuspended ? `<div style="color:#ef4444; font-size:0.75rem; font-weight:700; margin-top:3px; text-decoration:none;">🚫 Class Suspended</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
 }
 
 
@@ -900,18 +950,16 @@ function showToast(message, type = 'info') {
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', function () {
     updateStats();
-    renderTodaySchedule();
     renderRecentAnnouncements();
     renderUpcomingDeadlines();
     renderAllAnnouncements();
     renderAllAssignments();
-    renderFullTimetable();
 
     setupDropZone();
 
-    // Fetch from MongoDB
+    // Fetch from MongoDB — these also call their render functions after data loads
     fetchAnnouncements();
     fetchAssignments();
-    fetchTimetable();
-    fetchStudentAttendance(); // Used for the attendance % stat card
+    fetchTimetable();           // renders today + full timetable + dash overview after load
+    fetchStudentAttendance();   // Used for the attendance % stat card
 });

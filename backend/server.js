@@ -48,45 +48,47 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // ---- Default Timetable Data (used to seed DB on first run) ----
 const DEFAULT_TIMETABLE = {
     Monday: [
-        { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Abhishek Nagar', room: 'Lt 21' },
-        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' }
+        { time: '09:10 - 10:50', subject: 'Mini Project',             faculty: 'Mr. Abhishek Nagar',  room: 'OS Lab',   isBreak: false },
+        { time: '10:50 - 11:40', subject: 'Technical Communication',   faculty: 'Dr. Pragati Shukla',  room: 'Lt 21',    isBreak: false },
+        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation',  faculty: 'Mr. Adeeb',           room: 'EED 201',  isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
+        { time: '02:00 - 03:40', subject: 'Operating System',          faculty: 'Mr. Deepanshu Singh', room: 'Lt 21',    isBreak: false },
+        { time: '03:40 - 04:30', subject: 'Ethical Research',          faculty: 'Miss Kajal',          room: 'Lt 21',    isBreak: false }
     ],
     Tuesday: [
-        { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '10:50 - 12:30', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Python Lab', faculty: 'Ahmed Husan', room: 'Dbms lab' },
-        { time: '03:40 - 04:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' }
+        { time: '09:10 - 10:50', subject: 'Operating System',          faculty: 'Mr. Deepanshu Singh', room: 'Lt 21',    isBreak: false },
+        { time: '10:50 - 12:30', subject: 'Automata',                  faculty: 'Mr. Rakesh',          room: 'Lt 21',    isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
+        { time: '02:00 - 03:40', subject: 'Python Lab',                faculty: 'Mr. Ahmed Husan',     room: 'OS Lab',   isBreak: false },
+        { time: '03:40 - 04:30', subject: 'OOPs in Java',              faculty: 'Dr. Manik Chandra',   room: 'Lt 21',    isBreak: false }
     ],
     Wednesday: [
-        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
+        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation',  faculty: 'Mr. Adeeb',           room: 'EED 201',  isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
+        { time: '02:00 - 03:40', subject: 'Python',                    faculty: 'Mr. Ahmed Husan',     room: 'Lt 21',    isBreak: false },
+        { time: '03:40 - 04:30', subject: 'Automata',                  faculty: 'Mr. Rakesh',          room: 'Lt 21',    isBreak: false }
     ],
     Thursday: [
-        { time: '09:10 - 10:50', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
-        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Operating System Lab', faculty: 'Ass. Dipanshu Singh', room: 'PPS Lab' }
+        { time: '09:10 - 10:50', subject: 'Automata',                  faculty: 'Mr. Rakesh',          room: 'Lt 21',    isBreak: false },
+        { time: '10:50 - 11:40', subject: 'Technical Communication',   faculty: 'Dr. Pragati Shukla',  room: 'Lt 21',    isBreak: false },
+        { time: '11:40 - 12:30', subject: 'Ethical Research',          faculty: 'Miss Kajal',          room: 'Lt 21',    isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
+        { time: '02:00 - 03:40', subject: 'Operating System Lab',      faculty: 'Mr. Deepanshu Singh', room: 'DBMS Lab', isBreak: false }
     ],
     Friday: [
-        { time: '10:00 - 11:40', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
+        { time: '10:00 - 11:40', subject: 'OOPs in Java',              faculty: 'Dr. Manik Chandra',   room: 'Lt 21',    isBreak: false },
+        { time: '11:40 - 12:30', subject: 'Technical Communication',   faculty: 'Dr. Pragati Shukla',  room: 'Lt 21',    isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
+        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation',  faculty: 'Mr. Adeeb',           room: 'EED 201',  isBreak: false },
+        { time: '03:40 - 04:30', subject: 'Operating System',          faculty: 'Mr. Deepanshu Singh', room: 'Lt 21',    isBreak: false }
     ],
     Saturday: [
-        { time: '09:10 - 10:50', subject: 'OOps Lab', faculty: 'Dr.Manik', room: 'Os lab' },
-        { time: '10:50 - 12:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ]
+        { time: '09:10 - 10:50', subject: 'OOPs Lab',                  faculty: 'Dr. Manik Chandra',   room: 'DBMS Lab', isBreak: false },
+        { time: '11:40 - 12:30', subject: 'OOPs in Java',              faculty: 'Dr. Manik Chandra',   room: 'Lt 21',    isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
+        { time: '03:40 - 04:30', subject: 'Python',                    faculty: 'Mr. Ahmed Husan',     room: 'Lt 21',    isBreak: false }
+    ],
+    Sunday: []
 };
 
 // ---- MongoDB Connection ----
