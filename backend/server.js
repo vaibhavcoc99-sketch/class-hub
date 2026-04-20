@@ -11,6 +11,7 @@ const multer = require('multer');
 const User = require('./models/User');
 const Assignment = require('./models/Assignment');
 const Submission = require('./models/Submission');
+const Announcement = require('./models/Announcement');
 const {
     sendBroadcast,
     announcementTemplate,
@@ -287,6 +288,21 @@ async function getAllStudentEmails() {
 }
 
 // ============================================================
+//  📋  ANNOUNCEMENT CRUD ROUTES (MongoDB-backed)
+// ============================================================
+
+// GET /api/announcements — fetch all announcements (newest first)
+app.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.json({ success: true, announcements });
+    } catch (err) {
+        console.error('Fetch announcements error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch announcements' });
+    }
+});
+
+// ============================================================
 //  📧  NOTIFICATION ROUTES
 // ============================================================
 
@@ -299,9 +315,16 @@ app.post('/api/notify/announcement', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Title and message are required' });
         }
 
+        // ---- Save to MongoDB so students can see it on their dashboard ----
+        const saved = await Announcement.create({
+            title, message, priority, audience, facultyName
+        });
+        console.log(`💾 Announcement saved to DB: "${title}" (id: ${saved._id})`);
+
+        // ---- Email broadcast ----
         const students = await getAllStudentEmails();
         if (students.length === 0) {
-            return res.json({ success: true, message: 'No registered students to notify', sentCount: 0 });
+            return res.json({ success: true, message: 'Saved. No registered students to notify.', sentCount: 0, announcement: saved });
         }
 
         const emails = students.map(s => s.email);
@@ -316,6 +339,7 @@ app.post('/api/notify/announcement', async (req, res) => {
             success: true,
             message: `Announcement emailed to ${sentCount} student(s)`,
             sentCount,
+            announcement: saved,
             errors: errors.length > 0 ? errors : undefined
         });
     } catch (err) {

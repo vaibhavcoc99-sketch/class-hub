@@ -20,8 +20,8 @@ function logout() {
     window.location.href = 'index.html';
 }
 
-// ---- Mock Data ----
-const announcements = [];
+// ---- Data ----
+let announcements = []; // fetched from MongoDB
 
 let assignments = []; // dynamically fetched from MongoDB
 const API_BASE = 'http://localhost:5001';
@@ -94,6 +94,11 @@ function switchTab(tabName) {
 
     // Lazy init charts
     if (tabName === 'analytics') initCharts();
+
+    // When switching to announcements tab, mark visible ones as read after a small delay
+    if (tabName === 'announcements') {
+        setTimeout(() => observeUnreadBubbles(), 400);
+    }
 }
 
 // ---- Modal Helpers ----
@@ -114,6 +119,241 @@ document.addEventListener('keydown', e => {
         if (m) m.classList.remove('active');
     }
 });
+
+// ============================================================
+//  📢  ANNOUNCEMENT SYSTEM (MongoDB-backed, WhatsApp-style)
+// ============================================================
+
+// Read tracking via localStorage
+function getReadAnnouncementIds() {
+    try {
+        return JSON.parse(localStorage.getItem('classhub_read_announcements') || '[]');
+    } catch (e) { return []; }
+}
+
+function markAnnouncementRead(id) {
+    const readIds = getReadAnnouncementIds();
+    if (!readIds.includes(id)) {
+        readIds.push(id);
+        localStorage.setItem('classhub_read_announcements', JSON.stringify(readIds));
+    }
+}
+
+function isAnnouncementUnread(id) {
+    return !getReadAnnouncementIds().includes(id);
+}
+
+// Fetch from MongoDB
+async function fetchAnnouncements() {
+    try {
+        const res = await fetch(`${API_BASE}/api/announcements`);
+        const data = await res.json();
+        if (data.success) {
+            announcements = data.announcements.map(a => ({
+                id: a._id,
+                title: a.title,
+                message: a.message,
+                priority: a.priority || 'normal',
+                audience: a.audience || 'All Students',
+                facultyName: a.facultyName || 'Faculty',
+                createdAt: a.createdAt,
+                unread: isAnnouncementUnread(a._id)
+            }));
+
+            renderAllAnnouncements();
+            renderRecentAnnouncements();
+            updateStats();
+            updateChatSubtitle();
+        }
+    } catch (err) {
+        console.error('Failed to fetch announcements:', err);
+    }
+}
+
+// Format date/time helpers
+function formatChatTime(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function formatChatDate(dateStr) {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = (today - msgDay) / (1000 * 60 * 60 * 24);
+
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function updateChatSubtitle() {
+    const el = document.getElementById('chat-subtitle');
+    if (!el) return;
+    const total = announcements.length;
+    const unread = announcements.filter(a => a.unread).length;
+    if (total === 0) {
+        el.textContent = 'No announcements yet';
+    } else if (unread > 0) {
+        el.textContent = `${total} messages \u00b7 ${unread} unread`;
+    } else {
+        el.textContent = `${total} messages`;
+    }
+}
+
+// Render WhatsApp-style announcement bubbles
+function renderAllAnnouncements() {
+    const container = document.getElementById('all-announcements');
+    if (!container) return;
+
+    if (announcements.length === 0) {
+        container.innerHTML = `
+            <div class="chat-empty">
+                <div class="chat-empty-icon">\ud83d\udced</div>
+                <p>No announcements yet</p>
+                <p style="font-size: 0.8rem; margin-top: 6px; opacity: 0.6;">Announcements from faculty will appear here</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort by date (oldest first for chat feel)
+    const sorted = [...announcements].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    let html = '';
+    let lastDate = '';
+
+    sorted.forEach((a, idx) => {
+        const dateLabel = formatChatDate(a.createdAt);
+        const timeLabel = formatChatTime(a.createdAt);
+
+        // Date separator
+        if (dateLabel !== lastDate) {
+            html += `<div class="chat-date-separator"><span>${dateLabel}</span></div>`;
+            lastDate = dateLabel;
+        }
+
+        const priorityIcons = { urgent: '\ud83d\udea8', important: '\u26a0\ufe0f', normal: '\ud83d\udce2' };
+        const isUnread = a.unread;
+
+        html += `
+            <div class="chat-bubble ${isUnread ? 'unread' : ''}" data-announcement-id="${a.id}" style="animation-delay: ${idx * 0.04}s">
+                <div class="chat-bubble-inner">
+                    <div class="chat-faculty-name">
+                        \ud83d\udc64 ${a.facultyName}
+                        <span class="chat-priority-tag ${a.priority}">${priorityIcons[a.priority] || '\ud83d\udce2'} ${a.priority}</span>
+                    </div>
+                    <div class="chat-bubble-title">${a.title}</div>
+                    <div class="chat-bubble-message">${a.message}</div>
+                    <div class="chat-bubble-footer">
+                        <span class="chat-bubble-time">${timeLabel}</span>
+                        <span class="chat-read-ticks ${isUnread ? '' : 'read'}">${isUnread ? '\u2713' : '\u2713\u2713'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    // Auto-scroll to bottom (latest message)
+    container.scrollTop = container.scrollHeight;
+
+    // Start observing unread bubbles
+    setTimeout(() => observeUnreadBubbles(), 300);
+}
+
+// Render recent announcements on the Overview tab (top 3 newest)
+function renderRecentAnnouncements() {
+    const container = document.getElementById('recent-announcements');
+    if (!container) return;
+
+    const recent = announcements.slice(0, 3); // already sorted newest first from API
+    if (recent.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center; font-size: 0.9rem;">No announcements yet</div>';
+        return;
+    }
+
+    container.innerHTML = recent.map(a => {
+        const icons = { urgent: '\ud83d\udea8', important: '\u26a0\ufe0f', normal: '\ud83d\udce2' };
+        const priorityClass = `priority-${a.priority}`;
+        const timeLabel = formatChatTime(a.createdAt);
+        const dateLabel = formatChatDate(a.createdAt);
+        return `
+            <div class="notification-item ${a.unread ? 'unread' : ''}">
+                <div class="notification-content">
+                    <h4>${icons[a.priority] || '\ud83d\udce2'} ${a.title} <span class="notification-priority ${priorityClass}">${a.priority}</span></h4>
+                    <p>${a.message}</p>
+                    <div class="notification-time">Posted by ${a.facultyName} \u2014 ${dateLabel}, ${timeLabel}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// IntersectionObserver: mark announcements as read when scrolled into view
+let announcementObserver = null;
+
+function observeUnreadBubbles() {
+    // Disconnect previous observer
+    if (announcementObserver) announcementObserver.disconnect();
+
+    const container = document.getElementById('all-announcements');
+    if (!container) return;
+
+    const unreadBubbles = container.querySelectorAll('.chat-bubble.unread');
+    if (unreadBubbles.length === 0) return;
+
+    announcementObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const bubble = entry.target;
+                const id = bubble.dataset.announcementId;
+
+                // Mark read after 1.5 seconds of being visible
+                setTimeout(() => {
+                    if (bubble.classList.contains('unread')) {
+                        markAnnouncementRead(id);
+                        bubble.classList.remove('unread');
+                        // Update ticks
+                        const ticks = bubble.querySelector('.chat-read-ticks');
+                        if (ticks) {
+                            ticks.textContent = '\u2713\u2713';
+                            ticks.classList.add('read');
+                        }
+                        // Update local data
+                        const ann = announcements.find(a => a.id === id);
+                        if (ann) ann.unread = false;
+
+                        updateStats();
+                        updateChatSubtitle();
+                        renderRecentAnnouncements();
+                    }
+                }, 1500);
+
+                announcementObserver.unobserve(bubble);
+            }
+        });
+    }, { root: container, threshold: 0.6 });
+
+    unreadBubbles.forEach(b => announcementObserver.observe(b));
+}
+
+// Mark all read button
+function markAllAnnouncementsRead() {
+    announcements.forEach(a => {
+        if (a.unread) {
+            markAnnouncementRead(a.id);
+            a.unread = false;
+        }
+    });
+    renderAllAnnouncements();
+    renderRecentAnnouncements();
+    updateStats();
+    updateChatSubtitle();
+    showToast('All announcements marked as read', 'success');
+}
 
 // ---- API Functions ----
 
@@ -179,31 +419,6 @@ function renderTodaySchedule() {
     `).join('');
 }
 
-function renderRecentAnnouncements() {
-    const container = document.getElementById('recent-announcements');
-    const recent = announcements.slice(0, 3);
-    container.innerHTML = recent.map(a => renderAnnouncementItem(a)).join('');
-}
-
-function renderAllAnnouncements() {
-    const container = document.getElementById('all-announcements');
-    container.innerHTML = announcements.map(a => renderAnnouncementItem(a)).join('');
-}
-
-function renderAnnouncementItem(a) {
-    const icons = { urgent: '🚨', important: '⚠️', normal: '📢' };
-    const priorityClass = `priority-${a.priority}`;
-    return `
-        <div class="notification-item ${a.unread ? 'unread' : ''}">
-            <div class="notification-content">
-                <h4>${icons[a.priority] || '📢'} ${a.title} <span class="notification-priority ${priorityClass}">${a.priority}</span></h4>
-                <p>${a.message}</p>
-                <div class="notification-time">Posted by ${a.postedBy} — ${a.time}</div>
-            </div>
-        </div>
-    `;
-}
-
 function renderUpcomingDeadlines() {
     const container = document.getElementById('upcoming-deadlines');
     const pending = assignments.filter(a => !a.submitted).slice(0, 3);
@@ -224,17 +439,17 @@ function renderAllAssignments() {
     const container = document.getElementById('all-assignments');
     container.innerHTML = assignments.map(a => {
         const statusBadge = a.submitted
-            ? `<span class="badge badge-success">✅ Submitted${a.grade ? ' — Grade: ' + a.grade : ''}</span>`
-            : `<span class="badge badge-warning">⏳ Pending</span>`;
+            ? `<span class="badge badge-success">\u2705 Submitted${a.grade ? ' \u2014 Grade: ' + a.grade : ''}</span>`
+            : `<span class="badge badge-warning">\u23f3 Pending</span>`;
         const actionBtn = a.submitted
             ? ''
-            : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal('${a.id}')">Submit →</button>`;
+            : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal('${a.id}')">Submit \u2192</button>`;
         return `
             <div class="assignment-card">
                 <div class="assignment-header">
                     <div>
                         <div class="assignment-title">${a.title}</div>
-                        <div class="assignment-subject">${a.subject} — ${a.faculty}</div>
+                        <div class="assignment-subject">${a.subject} \u2014 ${a.faculty}</div>
                     </div>
                     <div class="assignment-due ${a.submitted ? 'completed' : ''}">${a.submitted ? 'Completed' : 'Due: ' + a.dueDate}</div>
                 </div>
@@ -298,6 +513,8 @@ function updateStats() {
     if (unread > 0) {
         badge.textContent = unread;
         badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
     }
 }
 
@@ -539,7 +756,7 @@ function initCharts() {
 // ---- Toast ----
 function showToast(message, type = 'info') {
     document.querySelectorAll('.toast').forEach(t => t.remove());
-    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+    const icons = { success: '\u2705', error: '\u274c', info: '\u2139\ufe0f', warning: '\u26a0\ufe0f' };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `<span>${icons[type] || ''}</span><span>${message}</span>`;
@@ -562,4 +779,5 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Fetch from MongoDB
     fetchAssignments();
+    fetchAnnouncements();
 });

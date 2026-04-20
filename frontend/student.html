@@ -107,13 +107,24 @@
             </div>
         </div>
 
-        <!-- ===== Announcements Tab ===== -->
+        <!-- ===== Announcements Tab (WhatsApp-style) ===== -->
         <div id="announcements" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">All Announcements</h2>
+            <div class="chat-container">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <div class="chat-avatar">📢</div>
+                        <div class="chat-header-info">
+                            <h3>Class Announcements</h3>
+                            <span id="chat-subtitle" class="chat-subtitle">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="markAllAnnouncementsRead()" title="Mark all as read">✓✓ Mark all read</button>
+                    </div>
                 </div>
-                <div id="all-announcements">
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="all-announcements">
                     <!-- Filled by JS -->
                 </div>
             </div>
