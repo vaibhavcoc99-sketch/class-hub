@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: ['student', 'faculty'], required: true },
     rollNo: { type: String }, // For students
-    department: { type: String } // For faculty
+    department: { type: String }, // For faculty
+    subjects: [{ type: String }] // For faculty — their allowed subjects
 }, { timestamps: true });
 
 // Hash password before saving

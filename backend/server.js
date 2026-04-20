@@ -12,6 +12,7 @@ const User = require('./models/User');
 const Assignment = require('./models/Assignment');
 const Submission = require('./models/Submission');
 const Announcement = require('./models/Announcement');
+const Timetable = require('./models/Timetable');
 const {
     sendBroadcast,
     announcementTemplate,
@@ -40,13 +41,68 @@ app.use(express.json());
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// ---- Default Timetable Data (used to seed DB on first run) ----
+const DEFAULT_TIMETABLE = {
+    Monday: [
+        { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Abhishek Nagar', room: 'Lt 21' },
+        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
+        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
+        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' }
+    ],
+    Tuesday: [
+        { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
+        { time: '10:50 - 12:30', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Python Lab', faculty: 'Ahmed Husan', room: 'Dbms lab' },
+        { time: '03:40 - 04:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' }
+    ],
+    Wednesday: [
+        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
+    ],
+    Thursday: [
+        { time: '09:10 - 10:50', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
+        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
+        { time: '11:40 - 12:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Operating System Lab', faculty: 'Ass. Dipanshu Singh', room: 'PPS Lab' }
+    ],
+    Friday: [
+        { time: '10:00 - 11:40', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
+        { time: '11:40 - 12:30', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
+        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
+    ],
+    Saturday: [
+        { time: '09:10 - 10:50', subject: 'OOps Lab', faculty: 'Dr.Manik', room: 'Os lab' },
+        { time: '10:50 - 12:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
+    ]
+};
+
 // ---- MongoDB Connection ----
 mongoose.connect(process.env.MONGO_URI, { family: 4 })
-    .then(() => console.log('📦 Connected to MongoDB'))
+    .then(async () => {
+        console.log('📦 Connected to MongoDB');
+        // Auto-seed timetable if none exists
+        const existing = await Timetable.findOne();
+        if (!existing) {
+            await Timetable.create(DEFAULT_TIMETABLE);
+            console.log('📅 Default timetable seeded to MongoDB');
+        }
+    })
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // ---- In-memory OTP store (for demo; use MongoDB/Redis in production) ----
 const otpStore = new Map(); // email -> { otp, expiresAt }
+
+// ---- Allowed Faculty Whitelist (DEPRECATED - Subjects chosen on signup) ----
+const ALLOWED_FACULTY = [];
 
 // ---- Nodemailer Transporter ----
 const transporter = nodemailer.createTransport({
@@ -123,6 +179,13 @@ app.post('/api/auth/signup', async (req, res) => {
         return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
+    // ---- Faculty Subject Uniqueness Validation ----
+    if (role === 'faculty') {
+        if (!department) {
+            return res.status(400).json({ success: false, message: 'Faculty must specify their subject' });
+        }
+    }
+
     // 1. Verify OTP
     const stored = otpStore.get(email);
     if (!stored) {
@@ -143,15 +206,26 @@ app.post('/api/auth/signup', async (req, res) => {
             return res.status(400).json({ success: false, message: 'User already exists with this email' });
         }
 
-        // 3. Create User
+        // 3. For faculty, verify subject isn't already taken
+        let finalName = name;
+        let subjects = [];
+        if (role === 'faculty') {
+            const subjectTaken = await User.findOne({ role: 'faculty', department: department });
+            if (subjectTaken) {
+                return res.status(400).json({ success: false, message: `The subject '${department}' is already assigned to another faculty member.` });
+            }
+            subjects = [department]; // Faculty gets the subject they chose
+        }
+
+        // 4. Create User
         const user = await User.create({
-            name, email, password, role, rollNo, department
+            name: finalName, email, password, role, rollNo, department, subjects
         });
 
         // OTP is valid and user created — clean up
         otpStore.delete(email);
 
-        // 4. Generate JWT
+        // 5. Generate JWT
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret123', { expiresIn: '30d' });
 
         res.status(201).json({
@@ -164,7 +238,8 @@ app.post('/api/auth/signup', async (req, res) => {
                 email: user.email,
                 role: user.role,
                 rollNo: user.rollNo,
-                department: user.department
+                department: user.department,
+                subjects: user.subjects
             }
         });
     } catch (error) {
@@ -200,7 +275,8 @@ app.post('/api/auth/login', async (req, res) => {
                 email: user.email,
                 role: user.role,
                 rollNo: user.rollNo,
-                department: user.department
+                department: user.department,
+                subjects: user.subjects || []
             }
         });
     } catch (error) {
@@ -231,10 +307,15 @@ app.post('/api/assignments', async (req, res) => {
     }
 });
 
-// GET /api/assignments (Fetch all assignments)
+// GET /api/assignments (Fetch assignments — optionally filtered by facultyId)
 app.get('/api/assignments', async (req, res) => {
     try {
-        const assignments = await Assignment.find().sort({ createdAt: -1 });
+        const filter = {};
+        // If ?facultyId=xxx is provided, only return that faculty's assignments
+        if (req.query.facultyId) {
+            filter.facultyId = req.query.facultyId;
+        }
+        const assignments = await Assignment.find(filter).sort({ createdAt: -1 });
         res.json({ success: true, assignments });
     } catch (error) {
         console.error('Fetch assignments error:', error);
@@ -286,6 +367,67 @@ async function getAllStudentEmails() {
     const students = await User.find({ role: 'student' }, 'email name').lean();
     return students;
 }
+
+// ============================================================
+//  📅  TIMETABLE CRUD ROUTES (MongoDB-backed)
+// ============================================================
+
+// GET /api/timetable — fetch the full weekly timetable
+app.get('/api/timetable', async (req, res) => {
+    try {
+        let timetable = await Timetable.findOne();
+        if (!timetable) {
+            // Auto-seed if somehow missing
+            timetable = await Timetable.create(DEFAULT_TIMETABLE);
+        }
+        res.json({ success: true, timetable });
+    } catch (err) {
+        console.error('Fetch timetable error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch timetable' });
+    }
+});
+
+// PUT /api/timetable/slot — update or add a single slot in a day
+// Body: { day, time, subject, faculty, room }
+app.put('/api/timetable/slot', async (req, res) => {
+    try {
+        const { day, time, subject, faculty, room } = req.body;
+        if (!day || !time || !subject) {
+            return res.status(400).json({ success: false, message: 'Day, time, and subject are required' });
+        }
+
+        let timetable = await Timetable.findOne();
+        if (!timetable) {
+            timetable = await Timetable.create(DEFAULT_TIMETABLE);
+        }
+
+        const daySlots = timetable[day];
+        if (!daySlots) {
+            return res.status(400).json({ success: false, message: `Invalid day: ${day}` });
+        }
+
+        // Find existing slot with matching time and replace, or add new
+        const idx = daySlots.findIndex(s => s.time === time);
+        if (idx >= 0) {
+            daySlots[idx].subject = subject;
+            daySlots[idx].faculty = faculty || '';
+            daySlots[idx].room = room || '';
+        } else {
+            daySlots.push({ time, subject, faculty: faculty || '', room: room || '', isBreak: false });
+            // Sort by time string after adding
+            daySlots.sort((a, b) => a.time.localeCompare(b.time));
+        }
+
+        timetable.markModified(day);
+        await timetable.save();
+
+        console.log(`📅 Timetable updated: ${day} ${time} → ${subject} (${faculty})`);
+        res.json({ success: true, message: 'Timetable slot updated', timetable });
+    } catch (err) {
+        console.error('Update timetable error:', err);
+        res.status(500).json({ success: false, message: 'Failed to update timetable' });
+    }
+});
 
 // ============================================================
 //  📋  ANNOUNCEMENT CRUD ROUTES (MongoDB-backed)
@@ -390,9 +532,32 @@ app.post('/api/notify/timetable', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Day, time, and subject are required' });
         }
 
+        // ---- Persist the timetable change to MongoDB ----
+        let timetable = await Timetable.findOne();
+        if (!timetable) {
+            timetable = await Timetable.create(DEFAULT_TIMETABLE);
+        }
+
+        const daySlots = timetable[day];
+        if (daySlots) {
+            const idx = daySlots.findIndex(s => s.time === time);
+            if (idx >= 0) {
+                daySlots[idx].subject = subject;
+                daySlots[idx].faculty = faculty || '';
+                daySlots[idx].room = room || '';
+            } else {
+                daySlots.push({ time, subject, faculty: faculty || '', room: room || '', isBreak: false });
+                daySlots.sort((a, b) => a.time.localeCompare(b.time));
+            }
+            timetable.markModified(day);
+            await timetable.save();
+            console.log(`📅 Timetable saved to DB: ${day} ${time} → ${subject}`);
+        }
+
+        // ---- Email broadcast ----
         const students = await getAllStudentEmails();
         if (students.length === 0) {
-            return res.json({ success: true, message: 'No registered students to notify', sentCount: 0 });
+            return res.json({ success: true, message: 'Timetable updated. No students to notify.', sentCount: 0 });
         }
 
         const emails = students.map(s => s.email);

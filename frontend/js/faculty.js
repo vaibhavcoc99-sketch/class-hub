@@ -8,8 +8,13 @@
         window.location.href = 'index.html';
         return;
     }
+    // Only faculty can access this page
+    if (user.role !== 'faculty') {
+        window.location.href = 'student.html';
+        return;
+    }
     document.getElementById('user-name').textContent = user.name || 'Faculty';
-    document.getElementById('user-role-label').textContent = user.department ? user.department : 'Faculty • CSE Department';
+    document.getElementById('user-role-label').textContent = user.department || 'Faculty • CSE Department';
     document.getElementById('user-avatar').textContent = (user.name || 'F').charAt(0).toUpperCase();
 })();
 
@@ -25,57 +30,9 @@ const facultyAnnouncements = [];
 let facultyAssignments = []; // dynamically fetched from MongoDB
 const API_BASE = 'http://localhost:5001';
 
-const timetableData = {
-    Monday: [
-        { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Abhishek Nagar', room: 'Lt 21' },
-        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Prof. Adeeb', room: 'EED201' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Prof.Kajal', room: 'Lt 21' }
-    ],
-    Tuesday: [
-        { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '10:50 - 12:30', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Python Lab', faculty: 'Ahmed Husan', room: 'Dbms lab' },
-        { time: '03:40 - 04:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' }
-    ],
-    Wednesday: [
-        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ],
-    Thursday: [
-        { time: '09:10 - 10:50', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
-        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Operating System Lab', faculty: 'Ass. Dipanshu Singh', room: 'PPS Lab' }
-    ],
-    Friday: [
-        { time: '10:00 - 11:40', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ],
-    Saturday: [
-        { time: '09:10 - 10:50', subject: 'OOps Lab', faculty: 'Dr.Manik', room: 'Os lab' },
-        { time: '10:50 - 12:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ]
-};
+let timetableData = {}; // fetched from MongoDB
 
-const attendanceData = [
-    { subject: 'Operating System', percent: 92 },
-    { subject: 'OOps using JAVA', percent: 88 },
-    { subject: 'Automata', percent: 85 },
-    { subject: 'Python', percent: 90 },
-    { subject: 'Ethical Research', percent: 78 },
-    { subject: 'Sensor & Instrumentation', percent: 94 }
-];
+const attendanceData = [];
 
 const lowAttendanceStudents = [];
 
@@ -135,7 +92,12 @@ document.addEventListener('keydown', e => {
 
 async function fetchAssignments() {
     try {
-        const res = await fetch(`${API_BASE}/api/assignments`);
+        const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+        // Faculty only sees their own assignments
+        const url = user.id
+            ? `${API_BASE}/api/assignments?facultyId=${user.id}`
+            : `${API_BASE}/api/assignments`;
+        const res = await fetch(url);
         const data = await res.json();
         if (data.success) {
             facultyAssignments = data.assignments.map(a => ({
@@ -144,10 +106,12 @@ async function fetchAssignments() {
                 subject: a.course,
                 description: a.description,
                 dueDate: a.deadline,
-                totalMarks: 100, // mock mapping
-                submissions: Math.floor(Math.random() * 5), // mock
-                total: 60, // mock
-                status: 'active'
+                totalMarks: 100,
+                submissions: 0,
+                total: 79,
+                status: 'active',
+                facultyId: a.facultyId,
+                facultyName: a.facultyName
             }));
             renderFacultyAssignments();
             updateStats();
@@ -158,14 +122,33 @@ async function fetchAssignments() {
     }
 }
 
+// ---- Populate subject dropdown with only this faculty's allowed subjects ----
+function initSubjectDropdown() {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const subjects = user.subjects || [];
+    const dropdown = document.getElementById('asg-subject');
+    if (!dropdown || subjects.length === 0) return;
+
+    dropdown.innerHTML = '<option value="">Select Subject</option>';
+    subjects.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        dropdown.appendChild(opt);
+    });
+}
+
 // ---- Render Functions ----
 
 function renderRecentActivity() {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const dept = user.department || 'your subject';
+    
     const activities = [
         { icon: '📢', text: 'You posted "Class Cancelled — Tomorrow"', time: '2 hours ago' },
-        { icon: '📝', text: '15 students submitted OS Mini Project', time: '5 hours ago' },
-        { icon: '✅', text: 'Marked attendance for Data Structures', time: 'Yesterday' },
-        { icon: '📊', text: 'Graded 60 submissions for BST Implementation', time: '2 days ago' },
+        { icon: '📝', text: `15 students submitted ${dept} Mini Project`, time: '5 hours ago' },
+        { icon: '✅', text: `Marked attendance for ${dept}`, time: 'Yesterday' },
+        { icon: '📊', text: `Graded 60 submissions for ${dept}`, time: '2 days ago' },
         { icon: '📢', text: 'You posted "Mid-Semester Results Published"', time: '3 days ago' }
     ];
 
@@ -245,9 +228,40 @@ function renderFacultyTimetable() {
     container.innerHTML = html;
 }
 
+// Fetch timetable from MongoDB
+async function fetchTimetable() {
+    try {
+        const res = await fetch(`${API_BASE}/api/timetable`);
+        const data = await res.json();
+        if (data.success && data.timetable) {
+            const tt = data.timetable;
+            timetableData = {
+                Monday: tt.Monday || [],
+                Tuesday: tt.Tuesday || [],
+                Wednesday: tt.Wednesday || [],
+                Thursday: tt.Thursday || [],
+                Friday: tt.Friday || [],
+                Saturday: tt.Saturday || [],
+                Sunday: tt.Sunday || []
+            };
+            renderFacultyTimetable();
+        }
+    } catch (err) {
+        console.error('Failed to fetch timetable:', err);
+    }
+}
+
 function renderAttendanceProgress() {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const dept = user.department || 'Subject';
+    
+    // Auto-generate realistic mock data for their specific subject
+    const subjectAttendance = [
+        { subject: dept, percent: Math.floor(Math.random() * (95 - 75 + 1)) + 75 }
+    ];
+    
     const container = document.getElementById('attendance-progress');
-    container.innerHTML = attendanceData.map(a => {
+    container.innerHTML = subjectAttendance.map(a => {
         const colorClass = a.percent >= 85 ? '' : a.percent >= 75 ? 'warning' : 'danger';
         const textColor = a.percent >= 85 ? 'var(--success-light)' : a.percent >= 75 ? 'var(--warning)' : 'var(--danger-light)';
         return `
@@ -311,7 +325,8 @@ function renderAttendanceMarking() {
 
 function updateStats() {
     const active = facultyAssignments.filter(a => a.status === 'active').length;
-    const avg = Math.round(attendanceData.reduce((s, a) => s + a.percent, 0) / attendanceData.length);
+    const avg = 87; // Real mock logic could go here based on generated subjectAttendance
+
     document.getElementById('stat-active-assignments').textContent = active;
     document.getElementById('stat-avg-attendance').textContent = avg + '%';
     document.getElementById('stat-announcements-count').textContent = facultyAnnouncements.length;
@@ -448,9 +463,9 @@ async function updateTimetable(e) {
 
     closeModal('editTimetableModal');
     e.target.reset();
-    showToast('Timetable updated! Notifying students via email...', 'info');
+    showToast('Timetable updated! Saving & notifying students...', 'info');
 
-    // 📧 Broadcast timetable change to all registered students
+    // 📧 Broadcast timetable change to all registered students (also saves to DB)
     try {
         const res = await fetch(`${API_BASE}/api/notify/timetable`, {
             method: 'POST',
@@ -470,6 +485,9 @@ async function updateTimetable(e) {
         console.error('Timetable notify error:', err);
         showToast('Timetable updated. Email notification failed (server unreachable).', 'warning');
     }
+
+    // Re-fetch timetable to reflect the change in the UI
+    await fetchTimetable();
 }
 
 async function openGradeModal(assignmentId) {
@@ -646,6 +664,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderAttendanceProgress();
     renderLowAttendance();
     fetchAssignments(); // Loads assignments dynamically from MongoDB
+    fetchTimetable();   // Loads timetable from MongoDB
+    initSubjectDropdown(); // Restrict subject choices to this faculty's subjects
 
     // Fetch and display registered student count in Overview
     try {

@@ -8,6 +8,11 @@
         window.location.href = 'index.html';
         return;
     }
+    // Only students can access this page
+    if (user.role !== 'student') {
+        window.location.href = 'faculty.html';
+        return;
+    }
     // Populate header
     document.getElementById('user-name').textContent = user.name || 'Student';
     document.getElementById('user-role-label').textContent = user.rollNo ? `Roll: ${user.rollNo}` : 'Student • CSE 2nd Year';
@@ -26,48 +31,7 @@ let announcements = []; // fetched from MongoDB
 let assignments = []; // dynamically fetched from MongoDB
 const API_BASE = 'http://localhost:5001';
 
-const timetableData = {
-    Monday: [
-        { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Abhishek Nagar', room: 'Lt 21' },
-        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' }
-    ],
-    Tuesday: [
-        { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Ass. Dipanshu Singh', room: 'Lt 21' },
-        { time: '10:50 - 12:30', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Python Lab', faculty: 'Ahmed Husan', room: 'Dbms lab' },
-        { time: '03:40 - 04:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' }
-    ],
-    Wednesday: [
-        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ],
-    Thursday: [
-        { time: '09:10 - 10:50', subject: 'Automata', faculty: 'Ass. Rakesh', room: 'Lt 21' },
-        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Ethical Research', faculty: 'Kajal', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Operating System Lab', faculty: 'Ass. Dipanshu Singh', room: 'PPS Lab' }
-    ],
-    Friday: [
-        { time: '10:00 - 11:40', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
-        { time: '11:40 - 12:30', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation', faculty: 'Adeeb', room: 'EED201' },
-        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ],
-    Saturday: [
-        { time: '09:10 - 10:50', subject: 'OOps Lab', faculty: 'Dr.Manik', room: 'Os lab' },
-        { time: '10:50 - 12:30', subject: 'OOps in java', faculty: 'Dr.Manik', room: 'Lt 21' },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
-        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Ahmed Husan', room: 'Lt 21' }
-    ]
-};
+let timetableData = {}; // fetched from MongoDB
 
 const attendanceData = [
     { subject: 'Operating System', percent: 92 },
@@ -405,8 +369,26 @@ async function fetchAssignments() {
 function renderTodaySchedule() {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = days[new Date().getDay()];
-    const slots = timetableData[today] || timetableData['Monday']; // Fallback to Monday
+    const slots = timetableData[today];
     const container = document.getElementById('today-schedule');
+
+    // Update the card title to show which day
+    const scheduleTitle = container.closest('.card');
+    if (scheduleTitle) {
+        const titleEl = scheduleTitle.querySelector('.card-title');
+        if (titleEl) titleEl.textContent = `Today's Schedule — ${today}`;
+    }
+
+    if (!slots || slots.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 30px 20px; color: var(--text-muted);">
+                <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
+                <p style="font-size: 1rem; font-weight: 600;">No classes today!</p>
+                <p style="font-size: 0.85rem; margin-top: 6px;">Enjoy your ${today}.</p>
+            </div>
+        `;
+        return;
+    }
 
     container.innerHTML = slots.map(slot => `
         <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}">
@@ -417,6 +399,31 @@ function renderTodaySchedule() {
             </div>
         </div>
     `).join('');
+}
+
+// Fetch timetable from MongoDB
+async function fetchTimetable() {
+    try {
+        const res = await fetch(`${API_BASE}/api/timetable`);
+        const data = await res.json();
+        if (data.success && data.timetable) {
+            const tt = data.timetable;
+            // Extract day arrays from the MongoDB document
+            timetableData = {
+                Monday: tt.Monday || [],
+                Tuesday: tt.Tuesday || [],
+                Wednesday: tt.Wednesday || [],
+                Thursday: tt.Thursday || [],
+                Friday: tt.Friday || [],
+                Saturday: tt.Saturday || [],
+                Sunday: tt.Sunday || []
+            };
+            renderTodaySchedule();
+            renderFullTimetable();
+        }
+    } catch (err) {
+        console.error('Failed to fetch timetable:', err);
+    }
 }
 
 function renderUpcomingDeadlines() {
@@ -780,4 +787,5 @@ document.addEventListener('DOMContentLoaded', function () {
     // Fetch from MongoDB
     fetchAssignments();
     fetchAnnouncements();
+    fetchTimetable();
 });

@@ -55,7 +55,7 @@ function selectRole(role) {
 
     if (role === 'student') {
         nameGroup.style.display = 'none';
-        rollGroup.style.display = 'none';
+        rollGroup.style.display = 'block';
         deptGroup.style.display = 'none';
     } else {
         nameGroup.style.display = 'block';
@@ -142,6 +142,14 @@ async function sendOtp() {
         document.getElementById('signup-name').value = mappedStudent.name;
         document.getElementById('signup-roll').value = mappedStudent.rollNo;
         name = mappedStudent.name; // update local var to pass !name check
+    } else if (activeRole === 'faculty') {
+        const dept = document.getElementById('signup-dept').value;
+        if (!dept) {
+            return showToast('Faculty members must select their Subject Taught', 'error');
+        }
+        if (!email.toLowerCase().endsWith('@ietlucknow.ac.in') && !email.toLowerCase().endsWith('@gmail.com')) {
+            return showToast('Please use an official institution email', 'error');
+        }
     }
 
     if (!name) return showToast('Please enter your name', 'error');

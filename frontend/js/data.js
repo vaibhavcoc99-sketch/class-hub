@@ -80,5 +80,20 @@ const GLOBAL_STUDENT_LIST = [
     { rollNo: '2400520100079', name: 'YASH KUMAR' }
 ];
 
+// ---- Allowed Faculty List (11 members, each mapped to their subject) ----
+const GLOBAL_FACULTY_LIST = [
+    { name: 'Abhishek Nagar',     email: 'abhisheknagar@ietlucknow.ac.in',    subjects: ['Mini Project'] },
+    { name: 'Dr. Pragati Shukla', email: 'pragatishukla@ietlucknow.ac.in',    subjects: ['Technical Communication'] },
+    { name: 'Adeeb',              email: 'adeeb@ietlucknow.ac.in',            subjects: ['Sensor & Instrumentation'] },
+    { name: 'Dipanshu Singh',     email: 'dipanshu@ietlucknow.ac.in',         subjects: ['Operating System', 'Operating System Lab'] },
+    { name: 'Kajal',              email: 'kajal@ietlucknow.ac.in',            subjects: ['Ethical Research'] },
+    { name: 'Rakesh',             email: 'rakesh@ietlucknow.ac.in',           subjects: ['Automata'] },
+    { name: 'Ahmed Husan',        email: 'ahmedhusan@ietlucknow.ac.in',       subjects: ['Python', 'Python Lab'] },
+    { name: 'Dr. Manik',          email: 'manik@ietlucknow.ac.in',            subjects: ['OOps in java', 'OOps using JAVA', 'OOps Lab', 'OOps using JAVA Lab'] },
+    { name: 'Vaibhav Agarwal',    email: 'vaibhavcoc99@gmail.com',            subjects: ['Mini Project', 'Operating System', 'Python', 'Automata', 'OOps in java', 'Technical Communication', 'Ethical Research', 'Sensor & Instrumentation'] },
+    { name: 'Admin Faculty',      email: 'admin@ietlucknow.ac.in',            subjects: ['Mini Project', 'Operating System', 'Python', 'Automata', 'OOps in java', 'Technical Communication', 'Ethical Research', 'Sensor & Instrumentation'] },
+    { name: 'HOD CSE',            email: 'hodcse@ietlucknow.ac.in',           subjects: ['Mini Project', 'Operating System', 'Python', 'Automata', 'OOps in java', 'Technical Communication', 'Ethical Research', 'Sensor & Instrumentation'] }
+];
+
 // Clean mock announcements entirely
 const GLOBAL_ANNOUNCEMENTS = [];
