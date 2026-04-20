@@ -195,6 +195,23 @@
                     <p>No marks have been entered by your faculty yet.</p>
                 </div>
             </div>
+
+            <!-- Subject-wise Class Attendance -->
+            <div class="card" style="margin-top: 24px;">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Subject-wise Class Attendance</h2>
+                </div>
+                <div id="attendance-loading" style="text-align:center; padding:30px; color:var(--text-muted);">
+                    ⏳ Loading attendance…
+                </div>
+                <div id="attendance-container" style="display:none; padding: 20px;">
+                    <!-- Filled by JS -->
+                </div>
+                <div id="attendance-empty" style="display:none; text-align:center; padding:30px; color:var(--text-muted);">
+                    <div style="font-size:2.5rem; margin-bottom:10px;">📊</div>
+                    <p>No attendance data available yet.</p>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -248,6 +265,6 @@
     </div>
 
     <script src="js/data.js"></script>
-    <script src="js/student.js"></script>
+    <script src="js/student_v2.js"></script>
 </body>
 </html>

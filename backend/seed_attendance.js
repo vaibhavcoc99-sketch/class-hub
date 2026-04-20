@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const StudentStats = require('./models/StudentStats');
-require('dotenv').config();
-
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const TOTAL_CLASSES = 20;
 
 const subjects = [
