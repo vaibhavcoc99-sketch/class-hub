@@ -179,14 +179,17 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
 // POST /api/auth/signup (Verifies OTP and Creates User)
 app.post('/api/auth/signup', async (req, res) => {
-    const { name, email, password, role, rollNo, department, otp } = req.body;
+    const { name, email, password, role, rollNo, department, otp, facultyKey } = req.body;
 
     if (!email || !otp || !name || !password || !role) {
         return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    // ---- Faculty Subject Uniqueness Validation ----
+    // ---- Faculty Validation ----
     if (role === 'faculty') {
+        if (!facultyKey || facultyKey !== 'Classhub@faculty') {
+            return res.status(403).json({ success: false, message: 'Invalid Protective Key. Registration restricted.' });
+        }
         if (!department) {
             return res.status(400).json({ success: false, message: 'Faculty must specify their subject' });
         }

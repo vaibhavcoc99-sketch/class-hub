@@ -65,6 +65,7 @@ function selectRole(role) {
     const nameGroup = document.getElementById('signup-name-group');
     const rollGroup = document.getElementById('signup-roll-group');
     const deptGroup = document.getElementById('signup-dept-group');
+    const facultyKeyGroup = document.getElementById('signup-faculty-key-group');
 
     studentEl.classList.toggle('active', role === 'student');
     facultyEl.classList.toggle('active', role === 'faculty');
@@ -73,10 +74,12 @@ function selectRole(role) {
         nameGroup.style.display = 'none';
         rollGroup.style.display = 'block';
         deptGroup.style.display = 'none';
+        if (facultyKeyGroup) facultyKeyGroup.style.display = 'none';
     } else {
         nameGroup.style.display = 'block';
         rollGroup.style.display = 'none';
         deptGroup.style.display = 'block';
+        if (facultyKeyGroup) facultyKeyGroup.style.display = 'block';
     }
 }
 
@@ -160,6 +163,10 @@ async function sendOtp() {
         name = mappedStudent.name; // update local var to pass !name check
     } else if (activeRole === 'faculty') {
         const dept = document.getElementById('signup-dept').value;
+        const facultyKey = document.getElementById('signup-faculty-key').value;
+        if (!facultyKey || facultyKey !== 'Classhub@faculty') {
+            return showToast('Invalid Protective Key. Registration restricted.', 'error');
+        }
         if (!dept) {
             return showToast('Faculty members must select their Subject Taught', 'error');
         }
@@ -404,6 +411,11 @@ async function handleSignup(e) {
     const password = document.getElementById('signup-password').value;
     const rollNo = selectedRole === 'student' ? document.getElementById('signup-roll').value.trim() : null;
     const department = selectedRole === 'faculty' ? document.getElementById('signup-dept').value.trim() : null;
+    const facultyKey = selectedRole === 'faculty' ? document.getElementById('signup-faculty-key').value.trim() : null;
+
+    if (selectedRole === 'faculty' && facultyKey !== 'Classhub@faculty') {
+        return showToast('Invalid Protective Key. Registration restricted.', 'error');
+    }
 
     // Verify OTP and create account with backend
     const signupBtn = document.getElementById('signup-btn');
@@ -415,7 +427,7 @@ async function handleSignup(e) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                name, email, password, role: selectedRole, rollNo, department, otp: enteredOtp 
+                name, email, password, role: selectedRole, rollNo, department, otp: enteredOtp, facultyKey
             })
         });
         const data = await res.json();
