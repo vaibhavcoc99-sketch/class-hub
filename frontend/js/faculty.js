@@ -214,22 +214,112 @@ function renderFacultyAssignments() {
     }).join('');
 }
 
+// Match slot subject to faculty's department — handles "OOps using JAVA" vs "OOps in java" etc.
+function subjectMatchesFaculty(slotSubject, facultyDept) {
+    if (!slotSubject || !facultyDept) return false;
+    const a = slotSubject.toLowerCase();
+    const b = facultyDept.toLowerCase();
+    if (a === b || a.includes(b) || b.includes(a)) return true;
+    
+    const norm = s => s.replace(/[^a-z0-9]/g, '');
+    if (norm(a) === norm(b) || norm(a).includes(norm(b)) || norm(b).includes(norm(a))) return true;
+
+    // Fuzzy word-based match: if they share any word >= 4 characters
+    const wordsA = a.split(/[^a-z0-9]+/).filter(w => w.length >= 4);
+    const wordsB = b.split(/[^a-z0-9]+/).filter(w => w.length >= 4);
+    return wordsA.some(w => wordsB.includes(w));
+}
+
 function renderFacultyTimetable() {
     const container = document.getElementById('faculty-timetable');
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const today = new Date().toISOString().slice(0, 10);
+
     let html = '';
-    for (const [day, slots] of Object.entries(timetableData)) {
+    let hasAnySlot = false;
+
+    const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    for (const day of dayOrder) {
+        const slots = timetableData[day] || [];
+        const mySlots = slots.filter(slot =>
+            !slot.isBreak && subjectMatchesFaculty(slot.subject, user.department)
+        );
+        if (mySlots.length === 0) continue;
+        hasAnySlot = true;
+
         html += `<div class="timetable-day">${day}</div>`;
-        html += slots.map(slot => `
-            <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}">
-                <div class="slot-time">${slot.time}</div>
-                <div class="slot-details">
-                    <div class="slot-subject">${slot.subject}</div>
-                    ${slot.faculty ? `<div class="slot-faculty">${slot.faculty} <span class="slot-room">${slot.room}</span></div>` : ''}
+        html += mySlots.map(slot => {
+            const suspKey = `${day}||${slot.time}`;
+            const isSuspended = suspendedSlots.has(suspKey);
+            return `
+            <div class="timetable-slot" style="${isSuspended ? 'opacity:0.45;' : ''}">
+                <div class="slot-time" style="${isSuspended ? 'text-decoration:line-through; color:var(--danger-light);' : ''}">${slot.time}</div>
+                <div class="slot-details" style="flex:1;">
+                    <div class="slot-subject" style="${isSuspended ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${slot.subject}</div>
+                    <div class="slot-faculty" style="${isSuspended ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${slot.faculty || ''} <span class="slot-room">${slot.room || ''}</span></div>
                 </div>
-            </div>
-        `).join('');
+                ${isSuspended
+                    ? `<span style="font-size:0.78rem; color:var(--danger-light); font-weight:600; padding:4px 12px; border:1px solid var(--danger-light); border-radius:20px; white-space:nowrap;">🚫 Suspended</span>`
+                    : `<button onclick="suspendClass('${day}', '${slot.time.replace(/'/g,"\\'")}', '${today}')"
+                            style="background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border:none; padding:6px 16px; border-radius:8px; cursor:pointer; font-size:0.78rem; font-weight:600; white-space:nowrap; flex-shrink:0;">
+                            🚫 Suspend
+                        </button>`
+                }
+            </div>`;
+        }).join('');
+    }
+
+    if (!hasAnySlot) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">
+            <div style="font-size:2.5rem; margin-bottom:10px;">📅</div>
+            <p>No timetable slots found for <strong>${user.department || 'your subject'}</strong>.</p>
+        </div>`;
+        return;
     }
     container.innerHTML = html;
+}
+
+// Suspended slots for today: "Day||time" strings
+let suspendedSlots = new Set();
+
+async function fetchSuspendedSlots() {
+    try {
+        const today = new Date().toISOString().slice(0, 10);
+        const res = await fetch(`${API_BASE}/api/suspend-class?date=${today}`);
+        const data = await res.json();
+        if (data.success) {
+            suspendedSlots = new Set(data.suspensions.map(s => `${s.day}||${s.time}`));
+        }
+    } catch (err) {
+        console.warn('Could not fetch suspended slots:', err);
+    }
+}
+
+// One-click suspend — no prompt needed
+async function suspendClass(day, time, date) {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const subject = user.department;
+    if (!subject) return showToast('Subject not found in your profile', 'error');
+
+    showToast('Suspending class & notifying students\u2026', 'info');
+
+    try {
+        const res = await fetch(`${API_BASE}/api/suspend-class`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject, day, time, date, facultyName: user.name || 'Faculty', reason: '' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            suspendedSlots.add(`${day}||${time}`);
+            renderFacultyTimetable();
+            showToast(`\ud83d\udeab Class suspended! ${data.sentCount} student(s) notified.`, 'success');
+        } else {
+            showToast(data.message || 'Failed to suspend class', 'error');
+        }
+    } catch (err) {
+        showToast('Network error suspending class', 'error');
+    }
 }
 
 // Fetch timetable from MongoDB
@@ -240,20 +330,23 @@ async function fetchTimetable() {
         if (data.success && data.timetable) {
             const tt = data.timetable;
             timetableData = {
-                Monday: tt.Monday || [],
-                Tuesday: tt.Tuesday || [],
+                Monday:    tt.Monday    || [],
+                Tuesday:   tt.Tuesday   || [],
                 Wednesday: tt.Wednesday || [],
-                Thursday: tt.Thursday || [],
-                Friday: tt.Friday || [],
-                Saturday: tt.Saturday || [],
-                Sunday: tt.Sunday || []
+                Thursday:  tt.Thursday  || [],
+                Friday:    tt.Friday    || [],
+                Saturday:  tt.Saturday  || [],
+                Sunday:    tt.Sunday    || []
             };
+            await fetchSuspendedSlots();
             renderFacultyTimetable();
         }
     } catch (err) {
         console.error('Failed to fetch timetable:', err);
     }
 }
+
+
 
 // Fetch live statistics for exactly this faculty's subject
 async function fetchFacultyStats() {

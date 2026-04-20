@@ -16,6 +16,7 @@ const Timetable = require('./models/Timetable');
 const AttendanceSession = require('./models/AttendanceSession');
 const StudentStats = require('./models/StudentStats');
 const InternalMarks = require('./models/InternalMarks');
+const SuspendedClass = require('./models/SuspendedClass');
 const {
     sendBroadcast,
     announcementTemplate,
@@ -615,6 +616,71 @@ app.put('/api/timetable/slot', async (req, res) => {
     } catch (err) {
         console.error('Update timetable error:', err);
         res.status(500).json({ success: false, message: 'Failed to update timetable' });
+    }
+});
+
+// ============================================================
+//  🚫  CLASS SUSPENSION ROUTES
+// ============================================================
+
+// GET /api/suspend-class?date=YYYY-MM-DD  — fetch all suspensions for a date (student view)
+app.get('/api/suspend-class', async (req, res) => {
+    try {
+        const date = req.query.date || new Date().toISOString().slice(0, 10);
+        const suspensions = await SuspendedClass.find({ date }).lean();
+        res.json({ success: true, suspensions });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// POST /api/suspend-class  — faculty suspends a class slot and notifies students
+app.post('/api/suspend-class', async (req, res) => {
+    try {
+        const { subject, day, time, date, facultyName, reason } = req.body;
+        if (!subject || !day || !time || !date) {
+            return res.status(400).json({ success: false, message: 'subject, day, time, date required' });
+        }
+
+        // Upsert suspension record
+        await SuspendedClass.findOneAndUpdate(
+            { subject, day, time, date },
+            { subject, day, time, date, facultyName, reason: reason || '' },
+            { upsert: true, new: true }
+        );
+
+        // Broadcast email to all registered students
+        const User = require('./models/User');
+        const students = await User.find({ role: 'student' }).select('email').lean();
+        const emails = students.map(s => s.email).filter(Boolean);
+
+        const subjectLine = `🚫 Class Suspended — ${subject} (${day} ${time})`;
+        const htmlBody = `
+            <div style="font-family:'Segoe UI',Arial,sans-serif; max-width:560px; margin:0 auto; background:#0f0f1a; border-radius:12px; overflow:hidden; border:1px solid #2d2d44;">
+                <div style="background:linear-gradient(135deg,#ef4444,#dc2626); padding:24px 32px;">
+                    <h1 style="color:#fff; margin:0; font-size:1.3rem;">🚫 Class Suspended</h1>
+                    <p style="color:rgba(255,255,255,0.8); margin:4px 0 0; font-size:0.88rem;">Notification from ClassHub</p>
+                </div>
+                <div style="padding:26px 32px; color:#c8c8e0;">
+                    <p>Dear Students,</p>
+                    <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+                        <tr><td style="padding:8px 0; color:#94a3b8; width:130px;">Subject</td><td style="color:#fff; font-weight:600;">${subject}</td></tr>
+                        <tr><td style="padding:8px 0; color:#94a3b8;">Day</td><td style="color:#fff;">${day}</td></tr>
+                        <tr><td style="padding:8px 0; color:#94a3b8;">Time</td><td style="color:#fff;">${time}</td></tr>
+                        <tr><td style="padding:8px 0; color:#94a3b8;">Date</td><td style="color:#fff;">${date}</td></tr>
+                        <tr><td style="padding:8px 0; color:#94a3b8;">Faculty</td><td style="color:#fff;">${facultyName}</td></tr>
+                        ${reason ? `<tr><td style="padding:8px 0; color:#94a3b8;">Reason</td><td style="color:#fbbf24;">${reason}</td></tr>` : ''}
+                    </table>
+                    <p style="margin-top:20px; color:#64748b; font-size:0.82rem;">— ClassHub Notification System · IET Lucknow</p>
+                </div>
+            </div>`;
+
+        const { sentCount } = await sendBroadcast(transporter, emails, subjectLine, htmlBody);
+        console.log(`🚫 Class suspended: ${subject} on ${day} ${time} — notified ${sentCount} students`);
+        res.json({ success: true, message: `Class suspended. ${sentCount} student(s) notified.`, sentCount });
+    } catch (err) {
+        console.error('Suspend class error:', err);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 

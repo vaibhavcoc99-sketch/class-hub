@@ -359,23 +359,63 @@ async function fetchAssignments() {
 
 // ---- Render Functions ----
 
+// Suspended classes for today: Set of "Day||time"
+let suspendedSlotsStudent = new Set();
+// Also store full suspension objects for subject matching
+let suspensionsList = [];
+
+async function fetchSuspendedSlotsStudent() {
+    try {
+        const today = new Date().toISOString().slice(0, 10);
+        const res = await fetch(`${API_BASE}/api/suspend-class?date=${today}`);
+        const data = await res.json();
+        if (data.success) {
+            suspensionsList = data.suspensions;
+            suspendedSlotsStudent = new Set(data.suspensions.map(s => `${s.day}||${s.time}`));
+        }
+    } catch (err) {
+        console.warn('Could not fetch suspensions:', err);
+    }
+}
+
+// Check if a specific slot is suspended (match by day + time; slot subject check ensures correctness)
+function isSlotSuspended(day, slot) {
+    const key = `${day}||${slot.time}`;
+    if (!suspendedSlotsStudent.has(key)) return false;
+    
+    // Double-check against the subject too (different teachers could own different slots at same time)
+    return suspensionsList.some(sus => {
+        if (sus.day !== day || sus.time !== slot.time) return false;
+        
+        const a = (slot.subject || '').toLowerCase();
+        const b = (sus.subject || '').toLowerCase();
+        if (a === b || a.includes(b) || b.includes(a)) return true;
+        
+        const norm = s => s.replace(/[^a-z0-9]/g, '');
+        if (norm(a) === norm(b) || norm(a).includes(norm(b)) || norm(b).includes(norm(a))) return true;
+
+        const wordsA = a.split(/[^a-z0-9]+/).filter(w => w.length >= 4);
+        const wordsB = b.split(/[^a-z0-9]+/).filter(w => w.length >= 4);
+        return wordsA.some(w => wordsB.includes(w));
+    });
+}
+
 function renderTodaySchedule() {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = days[new Date().getDay()];
     const slots = timetableData[today];
     const container = document.getElementById('today-schedule');
 
-    // Update the card title to show which day
     const scheduleTitle = container.closest('.card');
     if (scheduleTitle) {
         const titleEl = scheduleTitle.querySelector('.card-title');
-        if (titleEl) titleEl.textContent = `Today's Schedule — ${today}`;
+        if (titleEl) titleEl.textContent = `Today's Schedule \u2014 ${today}`;
     }
 
     if (!slots || slots.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 30px 20px; color: var(--text-muted);">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
+                <div style="font-size: 2.5rem; margin-bottom: 10px;">&#x1F389;</div>
                 <p style="font-size: 1rem; font-weight: 600;">No classes today!</p>
                 <p style="font-size: 0.85rem; margin-top: 6px;">Enjoy your ${today}.</p>
             </div>
@@ -383,33 +423,18 @@ function renderTodaySchedule() {
         return;
     }
 
-    container.innerHTML = slots.map(slot => `
-        <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}">
-            <div class="slot-time">${slot.time}</div>
+    container.innerHTML = slots.map(slot => {
+        const isSuspended = isSlotSuspended(today, slot);
+        return `
+        <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}" style="${isSuspended ? 'opacity:0.38; filter:grayscale(0.7);' : ''}">
+            <div class="slot-time" style="${isSuspended ? 'text-decoration:line-through; color:var(--danger-light);' : ''}">${slot.time}</div>
             <div class="slot-details">
-                <div class="slot-subject">${slot.subject}</div>
-                ${slot.faculty ? `<div class="slot-faculty">${slot.faculty} <span class="slot-room">${slot.room}</span></div>` : ''}
+                <div class="slot-subject" style="${isSuspended ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${slot.subject}</div>
+                ${slot.faculty ? `<div class="slot-faculty" style="${isSuspended ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${slot.faculty} <span class="slot-room">${slot.room}</span></div>` : ''}
+                ${isSuspended ? `<div style="color:var(--danger-light); font-size:0.78rem; font-weight:600; margin-top:4px;">&#x1F6AB; Class Suspended</div>` : ''}
             </div>
-        </div>
-    `).join('');
-}
-
-// Fetch attendance summary from MongoDB (still used for the stat card %)
-async function fetchStudentAttendance() {
-    try {
-        const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
-        if (!user.rollNo) return;
-
-        const res = await fetch(`${API_BASE}/api/attendance/summary?rollNo=${user.rollNo}`);
-        const data = await res.json();
-
-        if (data.success && data.stats) {
-            attendanceData = data.stats;
-            updateStats();
-        }
-    } catch (err) {
-        console.error('Failed to fetch attendance:', err);
-    }
+        </div>`;
+    }).join('');
 }
 
 // Fetch timetable from MongoDB
@@ -419,16 +444,16 @@ async function fetchTimetable() {
         const data = await res.json();
         if (data.success && data.timetable) {
             const tt = data.timetable;
-            // Extract day arrays from the MongoDB document
             timetableData = {
-                Monday: tt.Monday || [],
-                Tuesday: tt.Tuesday || [],
+                Monday:    tt.Monday    || [],
+                Tuesday:   tt.Tuesday   || [],
                 Wednesday: tt.Wednesday || [],
-                Thursday: tt.Thursday || [],
-                Friday: tt.Friday || [],
-                Saturday: tt.Saturday || [],
-                Sunday: tt.Sunday || []
+                Thursday:  tt.Thursday  || [],
+                Friday:    tt.Friday    || [],
+                Saturday:  tt.Saturday  || [],
+                Sunday:    tt.Sunday    || []
             };
+            await fetchSuspendedSlotsStudent();
             renderTodaySchedule();
             renderFullTimetable();
         }
@@ -437,67 +462,30 @@ async function fetchTimetable() {
     }
 }
 
-function renderUpcomingDeadlines() {
-    const container = document.getElementById('upcoming-deadlines');
-    const pending = assignments.filter(a => !a.submitted).slice(0, 3);
-    container.innerHTML = pending.map(a => `
-        <div class="assignment-card">
-            <div class="assignment-header">
-                <div>
-                    <div class="assignment-title">${a.title}</div>
-                    <div class="assignment-subject">${a.subject}</div>
-                </div>
-                <div class="assignment-due">Due: ${a.dueDate}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-function renderAllAssignments() {
-    const container = document.getElementById('all-assignments');
-    container.innerHTML = assignments.map(a => {
-        const statusBadge = a.submitted
-            ? `<span class="badge badge-success">\u2705 Submitted${a.grade ? ' \u2014 Grade: ' + a.grade : ''}</span>`
-            : `<span class="badge badge-warning">\u23f3 Pending</span>`;
-        const actionBtn = a.submitted
-            ? ''
-            : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal('${a.id}')">Submit \u2192</button>`;
-        return `
-            <div class="assignment-card">
-                <div class="assignment-header">
-                    <div>
-                        <div class="assignment-title">${a.title}</div>
-                        <div class="assignment-subject">${a.subject} \u2014 ${a.faculty}</div>
-                    </div>
-                    <div class="assignment-due ${a.submitted ? 'completed' : ''}">${a.submitted ? 'Completed' : 'Due: ' + a.dueDate}</div>
-                </div>
-                <div class="assignment-description">${a.description}</div>
-                <div class="assignment-footer">
-                    <div>${statusBadge}</div>
-                    ${actionBtn}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
 function renderFullTimetable() {
     const container = document.getElementById('full-timetable');
+    const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     let html = '';
-    for (const [day, slots] of Object.entries(timetableData)) {
+    for (const day of dayOrder) {
+        const slots = timetableData[day] || [];
+        if (slots.length === 0) continue;
         html += `<div class="timetable-day">${day}</div>`;
-        html += slots.map(slot => `
-            <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}">
-                <div class="slot-time">${slot.time}</div>
+        html += slots.map(slot => {
+            const isSuspended = isSlotSuspended(day, slot);
+            return `
+            <div class="timetable-slot ${slot.isBreak ? 'break-slot' : ''}" style="${isSuspended ? 'opacity:0.38; filter:grayscale(0.7);' : ''}">
+                <div class="slot-time" style="${isSuspended ? 'text-decoration:line-through; color:var(--danger-light);' : ''}">${slot.time}</div>
                 <div class="slot-details">
-                    <div class="slot-subject">${slot.subject}</div>
-                    ${slot.faculty ? `<div class="slot-faculty">${slot.faculty} <span class="slot-room">${slot.room}</span></div>` : ''}
+                    <div class="slot-subject" style="${isSuspended ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${slot.subject}</div>
+                    ${slot.faculty ? `<div class="slot-faculty" style="${isSuspended ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${slot.faculty} <span class="slot-room">${slot.room}</span></div>` : ''}
+                    ${isSuspended ? `<div style="color:var(--danger-light); font-size:0.78rem; font-weight:600; margin-top:4px;">&#x1F6AB; Suspended</div>` : ''}
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     }
     container.innerHTML = html;
 }
+
 
 // ─── Internal Marks ─────────────────────────────────────────
 let internalMarksData = []; // [{subject, ct1, ct2, assignmentMarks, attendanceMarks}]
