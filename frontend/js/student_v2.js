@@ -537,6 +537,12 @@ function renderOverviewTodaySchedule() {
             </div>
         </div>`;
     }).join('');
+
+    // ── Dynamically update "Today's Classes" stat card ──
+    // Count only real classes (not breaks, not suspended)
+    const activeClassCount = slots.filter(slot => !slot.isBreak && !isSlotSuspended(today, slot)).length;
+    const statClassesEl = document.getElementById('stat-classes');
+    if (statClassesEl) statClassesEl.textContent = activeClassCount;
 }
 
 
