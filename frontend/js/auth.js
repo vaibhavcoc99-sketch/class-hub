@@ -8,14 +8,17 @@ let authMode = 'login';
 let selectedRole = 'student';
 let captchaCode = '';
 let otpSent = false;
+let forgotOtpSent = false;
 
 // ---- Auth Mode Toggle ----
 function switchAuthMode(mode) {
     authMode = mode;
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
+    const forgotForm = document.getElementById('forgot-form'); // NEW
     const toggleLogin = document.getElementById('toggle-login');
     const toggleSignup = document.getElementById('toggle-signup');
+    const authToggle = document.getElementById('auth-toggle'); // Container for tabs
     const heading = document.getElementById('auth-heading');
     const description = document.getElementById('auth-description');
     const roleSelector = document.getElementById('role-selector');
@@ -23,14 +26,18 @@ function switchAuthMode(mode) {
     if (mode === 'login') {
         loginForm.style.display = 'block';
         signupForm.style.display = 'none';
+        forgotForm.style.display = 'none';
+        authToggle.style.display = 'flex';
         toggleLogin.classList.add('active');
         toggleSignup.classList.remove('active');
         heading.textContent = 'Welcome Back';
         description.textContent = 'Sign in to continue to your dashboard';
         roleSelector.style.display = 'none';
-    } else {
+    } else if (mode === 'signup') {
         loginForm.style.display = 'none';
         signupForm.style.display = 'block';
+        forgotForm.style.display = 'none';
+        authToggle.style.display = 'flex';
         toggleLogin.classList.remove('active');
         toggleSignup.classList.add('active');
         heading.textContent = 'Create Account';
@@ -38,6 +45,15 @@ function switchAuthMode(mode) {
         roleSelector.style.display = 'flex';
         generateCaptcha();
         resetOtpState();
+    } else if (mode === 'forgot') {
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'none';
+        forgotForm.style.display = 'block';
+        authToggle.style.display = 'none'; // Hide tabs
+        heading.textContent = 'Reset Password';
+        description.textContent = 'Enter your email to receive a recovery code';
+        roleSelector.style.display = 'none';
+        resetForgotState();
     }
 }
 
@@ -243,6 +259,29 @@ function resetOtpState() {
     document.querySelectorAll('#otp-inputs input').forEach(i => (i.value = ''));
 }
 
+function resetForgotState() {
+    forgotOtpSent = false;
+    const otpSection = document.getElementById('forgot-otp-section');
+    const sendOtpBtn = document.getElementById('forgot-send-otp-btn');
+    const resetBtn = document.getElementById('forgot-reset-btn');
+
+    if (otpSection) otpSection.style.display = 'none';
+    if (sendOtpBtn) {
+        sendOtpBtn.style.display = 'inline-block';
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.textContent = 'Send Reset Code';
+    }
+    if (resetBtn) resetBtn.style.display = 'none';
+
+    document.querySelectorAll('#forgot-otp-inputs input').forEach(i => (i.value = ''));
+    const emailField = document.getElementById('forgot-email');
+    if (emailField) emailField.value = '';
+    const newPass = document.getElementById('forgot-new-password');
+    if (newPass) newPass.value = '';
+    const confPass = document.getElementById('forgot-confirm-password');
+    if (confPass) confPass.value = '';
+}
+
 // ---- OTP Input Auto-advance ----
 document.addEventListener('DOMContentLoaded', function () {
     const otpInputs = document.querySelectorAll('#otp-inputs input');
@@ -266,6 +305,31 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const nextIdx = Math.min(idx + paste.length, otpInputs.length - 1);
             otpInputs[nextIdx].focus();
+        });
+    });
+
+    // Forgot Password OTP auto-advance
+    const forgotOtpInputs = document.querySelectorAll('#forgot-otp-inputs input');
+    forgotOtpInputs.forEach((input, idx) => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value && idx < forgotOtpInputs.length - 1) {
+                forgotOtpInputs[idx + 1].focus();
+            }
+        });
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && !this.value && idx > 0) {
+                forgotOtpInputs[idx - 1].focus();
+            }
+        });
+        input.addEventListener('paste', function (e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+            for (let i = 0; i < Math.min(paste.length, forgotOtpInputs.length - idx); i++) {
+                forgotOtpInputs[idx + i].value = paste[i];
+            }
+            const nextIdx = Math.min(idx + paste.length, forgotOtpInputs.length - 1);
+            forgotOtpInputs[nextIdx].focus();
         });
     });
 
@@ -376,6 +440,93 @@ async function handleSignup(e) {
         signupBtn.disabled = false;
         signupBtn.textContent = 'Create Account';
         return showToast('Network error. Is the server running?', 'error');
+    }
+}
+
+// ---- Forgot Password Handlers ----
+async function sendForgotOtp() {
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) return showToast('Please enter your email', 'error');
+
+    const sendBtn = document.getElementById('forgot-send-otp-btn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/forgot-password-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send Reset Code';
+            return showToast(data.message || 'Failed to send Reset Code', 'error');
+        }
+
+        forgotOtpSent = true;
+        document.getElementById('forgot-otp-section').style.display = 'block';
+        sendBtn.style.display = 'none';
+        document.getElementById('forgot-reset-btn').style.display = 'inline-block';
+
+        showToast(`Reset Code sent to ${email}!`, 'success');
+
+        const otpInputs = document.querySelectorAll('#forgot-otp-inputs input');
+        if (otpInputs[0]) otpInputs[0].focus();
+    } catch (err) {
+        console.error('Send Forgot OTP error:', err);
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send Reset Code';
+        showToast('Network error. Is the server running?', 'error');
+    }
+}
+
+async function handleResetPassword(e) {
+    e.preventDefault();
+    if (!forgotOtpSent) return showToast('Please request a reset code first', 'error');
+
+    const otpInputs = document.querySelectorAll('#forgot-otp-inputs input');
+    const enteredOtp = Array.from(otpInputs).map(i => i.value).join('');
+
+    if (enteredOtp.length !== 6) {
+        return showToast('Please enter the full 6-digit Reset Code', 'error');
+    }
+
+    const email = document.getElementById('forgot-email').value.trim();
+    const newPassword = document.getElementById('forgot-new-password').value;
+    const confirmPassword = document.getElementById('forgot-confirm-password').value;
+
+    if (!newPassword || newPassword.length < 6) return showToast('Password must be at least 6 characters', 'error');
+    if (newPassword !== confirmPassword) return showToast('Passwords do not match', 'error');
+
+    const resetBtn = document.getElementById('forgot-reset-btn');
+    resetBtn.disabled = true;
+    resetBtn.textContent = 'Resetting Password…';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp: enteredOtp, newPassword })
+        });
+        const data = await res.json();
+
+        resetBtn.disabled = false;
+        resetBtn.textContent = 'Reset Password';
+
+        if (!res.ok || !data.success) {
+            return showToast(data.message || 'Failed to reset password', 'error');
+        }
+
+        showToast('Password reset successfully! You can now log in.', 'success');
+        setTimeout(() => switchAuthMode('login'), 2000);
+    } catch (err) {
+        console.error('Reset Password error:', err);
+        resetBtn.disabled = false;
+        resetBtn.textContent = 'Reset Password';
+        showToast('Network error. Is the server running?', 'error');
     }
 }
 

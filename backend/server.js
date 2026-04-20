@@ -291,6 +291,101 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// POST /api/auth/forgot-password-otp
+app.post('/api/auth/forgot-password-otp', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'No account found with this email' });
+        }
+
+        // Generate 6-digit OTP
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+        // Store OTP with 5-minute expiry
+        otpStore.set(email, {
+            otp,
+            expiresAt: Date.now() + 5 * 60 * 1000
+        });
+
+        // Send email
+        const mailOptions = {
+            from: `"ClassHub" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: '🔐 ClassHub — Password Reset Code',
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #0f172a; border-radius: 16px; overflow: hidden; border: 1px solid #1e293b;">
+                    <div style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 30px; text-align: center;">
+                        <h1 style="color: #fff; margin: 0; font-size: 28px; letter-spacing: 3px;">CLASSHUB</h1>
+                        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Password Reset</p>
+                    </div>
+                    <div style="padding: 32px 28px; text-align: center;">
+                        <p style="color: #cbd5e1; font-size: 15px; margin-bottom: 24px;">Use the code below to reset your password:</p>
+                        <div style="background: #1e293b; border-radius: 12px; padding: 20px; display: inline-block; margin-bottom: 24px;">
+                            <span style="font-size: 36px; font-weight: 700; letter-spacing: 10px; color: #a5b4fc; font-family: monospace;">${otp}</span>
+                        </div>
+                        <p style="color: #64748b; font-size: 13px; margin-top: 8px;">This code expires in <strong style="color: #f59e0b;">5 minutes</strong></p>
+                        <hr style="border: none; border-top: 1px solid #1e293b; margin: 24px 0;">
+                        <p style="color: #475569; font-size: 12px;">If you didn't request a password reset, please ignore this email.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Password reset OTP sent to ${email}`);
+        res.json({ success: true, message: 'Reset code sent to your email' });
+    } catch (error) {
+        console.error('Forgot password OTP error:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to send Reset Code. Check server config.' });
+    }
+});
+
+// POST /api/auth/reset-password
+app.post('/api/auth/reset-password', async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const stored = otpStore.get(email);
+    if (!stored) {
+        return res.status(400).json({ success: false, message: 'No request found or code expired.' });
+    }
+    if (Date.now() > stored.expiresAt) {
+        otpStore.delete(email);
+        return res.status(400).json({ success: false, message: 'Reset code expired. Please request a new one.' });
+    }
+    if (stored.otp !== otp) {
+        return res.status(400).json({ success: false, message: 'Invalid reset code. Please try again.' });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'No account found with this email' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        // Successful password reset — clean up
+        otpStore.delete(email);
+
+        res.json({ success: true, message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ success: false, message: 'Server error during password reset' });
+    }
+});
+
 // ---- Assignment Routes ----
 
 // POST /api/assignments (Create a new assignment)
