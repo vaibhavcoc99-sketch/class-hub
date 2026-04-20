@@ -120,20 +120,26 @@ async function fetchAssignments() {
     }
 }
 
-// ---- Populate subject dropdown with only this faculty's allowed subjects ----
-function initSubjectDropdown() {
+// ---- Populate all subject labels with faculty's own subject from profile ----
+function initSubjectLabels() {
     const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
-    const subjects = user.subjects || [];
-    const dropdown = document.getElementById('asg-subject');
-    if (!dropdown || subjects.length === 0) return;
+    const subject = user.department || 'Your Subject';
 
-    dropdown.innerHTML = '<option value="">Select Subject</option>';
-    subjects.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s;
-        opt.textContent = s;
-        dropdown.appendChild(opt);
-    });
+    // Assignment modal label
+    const asgLabel = document.getElementById('asg-subject-label');
+    if (asgLabel) asgLabel.textContent = subject;
+
+    // Timetable modal label
+    const ttLabel = document.getElementById('tt-subject-label');
+    if (ttLabel) ttLabel.textContent = subject;
+
+    // Attendance marking label
+    const attLabel = document.getElementById('attendance-subject-label');
+    if (attLabel) attLabel.textContent = subject;
+
+    // Internal marks label
+    const marksLabel = document.getElementById('marks-subject-label');
+    if (marksLabel) marksLabel.textContent = subject;
 }
 
 // ---- Render Functions ----
@@ -260,14 +266,12 @@ async function fetchFacultyStats() {
         if (data.success) {
             assignedStudents = data.allStudents || [];
             lowAttendanceStudents = data.lowAttendance || [];
-            
-            // Only tracking ONE subject per faculty
+
             attendanceData = [{
                 subject: user.department,
                 percent: data.averageAttendance
             }];
 
-            renderAttendanceProgress();
             renderLowAttendance();
             renderAttendanceMarking();
         }
@@ -276,41 +280,68 @@ async function fetchFacultyStats() {
     }
 }
 
-function renderAttendanceProgress() {
-    const container = document.getElementById('attendance-progress');
-    container.innerHTML = attendanceData.map(a => {
-        const colorClass = a.percent >= 85 ? '' : a.percent >= 75 ? 'warning' : 'danger';
-        const textColor = a.percent >= 85 ? 'var(--success-light)' : a.percent >= 75 ? 'var(--warning)' : 'var(--danger-light)';
-        return `
-            <div class="progress-container">
-                <div class="progress-header">
-                    <span class="subject-name">${a.subject}</span>
-                    <span class="percent" style="color: ${textColor}">${a.percent}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill ${colorClass}" style="width: ${a.percent}%"></div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
+// (Subject-wise attendance progress removed — only low-attendance table shown now)
 
 function renderLowAttendance() {
     const container = document.getElementById('low-attendance-body');
+    if (!container) return;
     if (lowAttendanceStudents.length === 0) {
-        container.innerHTML = '<tr><td colspan="5" style="text-align: center;">No students have low attendance! 🎉</td></tr>';
+        container.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--success-light); padding:20px;">🎉 No students below 75% — great attendance!</td></tr>';
         return;
     }
     container.innerHTML = lowAttendanceStudents.map(s => `
         <tr>
             <td>${s.rollNo}</td>
-            <td>${s.name}</td>
-            <td><span class="badge badge-danger">${s.percent}%</span></td>
-            <td>${s.critical}</td>
-            <td><button class="btn btn-secondary btn-sm" onclick="sendAlert('${s.name}')">Send Alert</button></td>
+            <td><strong>${s.name}</strong></td>
+            <td><span style="color:var(--danger-light); font-weight:700;">${s.percent}%</span></td>
+            <td style="color:var(--text-muted); font-size:0.88rem;">${s.critical || '—'}</td>
+            <td>
+                <button class="btn btn-sm"
+                    style="background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-size:0.82rem; display:flex; align-items:center; gap:5px;"
+                    onclick="sendAttendanceAlert('${s.rollNo}', '${s.name.replace(/'/g,"\\'")}', ${s.percent})"
+                >
+                    🔔 Alert
+                </button>
+            </td>
         </tr>
     `).join('');
 }
+
+async function sendAttendanceAlert(rollNo, studentName, percent) {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    btn.textContent = '⏳ Sending…';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/attendance/alert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                rollNo,
+                studentName,
+                attendancePercent: percent,
+                subject: user.department || 'your subject',
+                facultyName: user.name || 'Faculty'
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`✅ Alert sent to ${studentName}`, 'success');
+            btn.textContent = '✅ Sent';
+            btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+        } else {
+            showToast(data.message || 'Failed to send alert', 'error');
+            btn.disabled = false;
+            btn.textContent = '🔔 Alert';
+        }
+    } catch (err) {
+        showToast('Network error sending alert', 'error');
+        btn.disabled = false;
+        btn.textContent = '🔔 Alert';
+    }
+}
+
 
 function renderAttendanceMarking() {
     const container = document.getElementById('attendance-marking-body');
@@ -408,15 +439,19 @@ async function postAnnouncement(e) {
 async function createAssignment(e) {
     e.preventDefault();
     const title = document.getElementById('asg-title').value.trim();
-    const subject = document.getElementById('asg-subject').value;
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const subject = user.department; // auto from faculty profile
     const description = document.getElementById('asg-description').value.trim();
     const dueDate = document.getElementById('asg-due').value;
     const totalMarks = parseInt(document.getElementById('asg-marks').value) || 100;
 
+    if (!subject) {
+        showToast('Could not detect your subject. Please log in again.', 'error');
+        return;
+    }
+
     const dateObj = new Date(dueDate);
     const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
 
     try {
         const res = await fetch(`${API_BASE}/api/assignments`, {
@@ -477,11 +512,11 @@ async function updateTimetable(e) {
     e.preventDefault();
     const day     = document.getElementById('tt-day').value;
     const time    = document.getElementById('tt-time').value;
-    const subject = document.getElementById('tt-subject').value;
     const faculty = document.getElementById('tt-faculty').value;
     const room    = document.getElementById('tt-room').value;
     const reason  = document.getElementById('tt-reason').value.trim();
     const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const subject = user.department; // auto from faculty profile
 
     closeModal('editTimetableModal');
     e.target.reset();
@@ -587,12 +622,9 @@ function toggleAttendanceMode() {
 
 async function saveAttendance() {
     const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
-    
-    // Read subject from the active HTML dropdown instead of strictly enforcing user.department
-    const subjectDropdown = document.getElementById('attendance-subject');
-    const selectedSubject = subjectDropdown ? subjectDropdown.value : user.department;
-    
-    if (!selectedSubject) return showToast('Error: No subject selected.', 'error');
+    const selectedSubject = user.department; // auto from faculty profile
+
+    if (!selectedSubject) return showToast('Error: Subject not found in your profile. Please log in again.', 'error');
 
     const checkboxes = document.querySelectorAll('.attendance-checkbox');
     const presentRollNos = [];
@@ -751,28 +783,24 @@ function showToast(message, type = 'info') {
 //  📊  INTERNAL MARKS — Faculty Entry Functions
 // ============================================================
 
-// Load existing marks for selected subject (or blank table for new entry)
+// Load marks for this faculty's subject automatically on page init
 async function loadInternalMarks() {
-    const subject = document.getElementById('marks-subject').value;
-    if (!subject) {
-        showToast('Please select a subject first', 'warning');
-        return;
-    }
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const subject = user.department;
+    if (!subject) return;
 
     const tableContainer = document.getElementById('marks-table-container');
     const emptyState     = document.getElementById('marks-empty');
-    const hint           = document.getElementById('marks-hint');
-    const saveBtn        = document.getElementById('save-marks-btn');
     const tbody          = document.getElementById('marks-table-body');
 
-    // Show loading state
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">⏳ Loading…</td></tr>';
-    tableContainer.style.display = 'block';
-    emptyState.style.display     = 'none';
-    hint.style.display           = 'block';
-    saveBtn.style.display        = 'inline-flex';
+    // Show loading spinner in empty state (already visible by default)
+    if (emptyState) {
+        emptyState.innerHTML = '<div style="font-size:3rem; margin-bottom:12px;">⏳</div><p>Loading marks…</p>';
+        emptyState.style.display = 'block';
+    }
+    if (tableContainer) tableContainer.style.display = 'none';
 
-    // Try to fetch already-saved marks for this subject
+    // Fetch already-saved marks for this subject
     let savedMarksMap = {};
     try {
         const res = await fetch(`${API_BASE}/api/internal-marks?subject=${encodeURIComponent(subject)}`);
@@ -784,7 +812,7 @@ async function loadInternalMarks() {
         console.warn('Could not load saved marks:', err);
     }
 
-    // Render a row for every student in the class
+    // Render a row for every student
     tbody.innerHTML = GLOBAL_STUDENT_LIST.map(s => {
         const saved = savedMarksMap[s.rollNo] || {};
         const v = (val) => (val !== null && val !== undefined) ? val : '';
@@ -792,30 +820,29 @@ async function loadInternalMarks() {
             <tr data-roll="${s.rollNo}">
                 <td>${s.rollNo}</td>
                 <td>${s.name}</td>
-                <td><input type="number" class="marks-input" data-field="ct1" min="0" step="0.5"
+                <td><input type="number" class="marks-input" min="0" step="0.5"
                     placeholder="—" value="${v(saved.ct1)}"
                     style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
-                <td><input type="number" class="marks-input" data-field="ct2" min="0" step="0.5"
+                <td><input type="number" class="marks-input" min="0" step="0.5"
                     placeholder="—" value="${v(saved.ct2)}"
                     style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
-                <td><input type="number" class="marks-input" data-field="assignmentMarks" min="0" max="5" step="0.5"
+                <td><input type="number" class="marks-input" min="0" max="5" step="0.5"
                     placeholder="0-5" value="${v(saved.assignmentMarks)}"
                     style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
-                <td><input type="number" class="marks-input" data-field="attendanceMarks" min="0" max="5" step="0.5"
+                <td><input type="number" class="marks-input" min="0" max="5" step="0.5"
                     placeholder="0-5" value="${v(saved.attendanceMarks)}"
                     style="width:70px; background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text-primary); text-align:center;"></td>
             </tr>`;
     }).join('');
 
-    showToast(`✅ Loaded marks for "${subject}"`, 'success');
+    if (tableContainer) tableContainer.style.display = 'block';
+    if (emptyState)     emptyState.style.display     = 'none';
 }
 
-// Collect input values and POST to backend
 async function saveInternalMarks() {
-    const subject = document.getElementById('marks-subject').value;
-    if (!subject) { showToast('No subject selected', 'warning'); return; }
-
     const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    const subject = user.department; // auto from profile
+    if (!subject) { showToast('Subject not found in profile', 'warning'); return; }
     const rows = document.querySelectorAll('#marks-table-body tr[data-roll]');
     const marks = [];
 
@@ -859,18 +886,20 @@ async function saveInternalMarks() {
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', async function () {
+    initSubjectLabels(); // Populate all subject labels from user.department
     updateStats();
     renderRecentActivity();
     renderFacultyAnnouncements();
     renderFacultyTimetable();
 
     // Core data fetches
-    await fetchFacultyStats(); // Loads students & attendance mapping completely
-    await fetchAssignments();  // Loads assignments dynamically from MongoDB
-    await fetchTimetable();    // Loads timetable from MongoDB
-    initSubjectDropdown();     // Restrict subject choices to this faculty's subjects
+    await fetchFacultyStats();
+    await fetchAssignments();
+    await fetchTimetable();
 
-    // Update global dashboard stats immediately after fetches
+    // Auto-load internal marks for the faculty's subject
+    loadInternalMarks();
+
     updateStats();
     try {
         const res = await fetch(`${API_BASE}/api/notify/students-count`);

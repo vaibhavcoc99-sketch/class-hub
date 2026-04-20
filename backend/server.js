@@ -389,6 +389,60 @@ app.get('/api/attendance/faculty-stats', async (req, res) => {
     }
 });
 
+// POST /api/attendance/alert  — Faculty sends a low-attendance warning email to a student
+app.post('/api/attendance/alert', async (req, res) => {
+    try {
+        const { rollNo, studentName, attendancePercent, subject, facultyName } = req.body;
+        if (!rollNo || !studentName) {
+            return res.status(400).json({ success: false, message: 'rollNo and studentName required' });
+        }
+
+        // Look up the student's registered email (they signed up with rollNo@ietlucknow.ac.in)
+        const User = require('./models/User');
+        let recipientEmail = `${rollNo}@ietlucknow.ac.in`; // default college email
+        const studentUser = await User.findOne({ rollNo }).select('email').lean();
+        if (studentUser?.email) recipientEmail = studentUser.email;
+
+        const subject_line = `⚠️ Low Attendance Alert — ${subject}`;
+        const htmlBody = `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0f1a; border-radius: 12px; overflow: hidden; border: 1px solid #2d2d44;">
+                <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 28px 32px;">
+                    <h1 style="color: #fff; margin: 0; font-size: 1.4rem;">ClassHub — Attendance Alert</h1>
+                    <p style="color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 0.9rem;">From ${facultyName} · ${subject}</p>
+                </div>
+                <div style="padding: 28px 32px; color: #c8c8e0;">
+                    <p style="margin: 0 0 16px;">Dear <strong style="color:#fff;">${studentName}</strong>,</p>
+                    <p style="margin: 0 0 16px;">
+                        Your attendance in <strong style="color:#a78bfa;">${subject}</strong> is currently
+                        <strong style="color:#f87171; font-size: 1.2rem;">${attendancePercent}%</strong>,
+                        which is below the required <strong style="color:#facc15;">75%</strong> minimum.
+                    </p>
+                    <div style="background:#1e1e36; border-left: 4px solid #f87171; padding: 14px 18px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 0; font-size: 0.95rem;">
+                            ⚠️ Students with attendance below 75% may not be permitted to sit for semester examinations as per institution policy.
+                        </p>
+                    </div>
+                    <p style="margin: 16px 0 0;">Please attend classes regularly. Contact your faculty <strong style="color:#a78bfa;">${facultyName}</strong> if you have any concerns.</p>
+                    <p style="margin: 24px 0 0; color: #64748b; font-size: 0.82rem;">— ClassHub Notification System · IET Lucknow</p>
+                </div>
+            </div>`;
+
+        const transporter_instance = transporter; // use the module-level nodemailer transporter
+        await transporter_instance.sendMail({
+            from: `"ClassHub 📢" <${process.env.EMAIL_USER}>`,
+            to: recipientEmail,
+            subject: subject_line,
+            html: htmlBody
+        });
+
+        console.log(`🔔 Attendance alert sent → ${studentName} (${recipientEmail}) — ${attendancePercent}%`);
+        res.json({ success: true, message: `Alert sent to ${recipientEmail}` });
+    } catch (err) {
+        console.error('Attendance alert error:', err);
+        res.status(500).json({ success: false, message: 'Failed to send alert: ' + err.message });
+    }
+});
+
 // POST /api/attendance (Faculty submits daily attendance)
 app.post('/api/attendance', async (req, res) => {
     const { date, subject, facultyId, presentRollNos, absentRollNos } = req.body;

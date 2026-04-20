@@ -164,16 +164,8 @@
                         Attendance</button>
                 </div>
 
-                <!-- Subject-wise progress -->
-                <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Subject-wise Class
-                    Attendance</h3>
-                <div id="attendance-progress">
-                    <!-- Filled by JS -->
-                </div>
-
-                <!-- Low attendance students -->
-                <h3 style="margin: 28px 0 14px; font-size: 1.15rem; color: var(--text-secondary);">Students Below 75%
-                    Attendance</h3>
+                <!-- Students below 75% attendance -->
+                <h3 style="margin-bottom: 14px; font-size: 1.05rem; color: var(--text-secondary);">⚠️ Students Below 75% Attendance</h3>
                 <div class="table-container">
                     <table id="low-attendance-table">
                         <thead>
@@ -182,7 +174,7 @@
                                 <th>Student Name</th>
                                 <th>Overall %</th>
                                 <th>Critical Subject</th>
-                                <th>Action</th>
+                                <th>Alert</th>
                             </tr>
                         </thead>
                         <tbody id="low-attendance-body">
@@ -195,20 +187,10 @@
                 <div id="attendance-marking" style="display: none; margin-top: 28px;">
                     <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Mark Today's
                         Attendance</h3>
-                    <div class="form-group" style="max-width: 300px;">
-                        <label for="attendance-subject">Subject</label>
-                        <select class="form-control" id="attendance-subject">
-                            <option>Operating System</option>
-                            <option>OOps using JAVA</option>
-                            <option>Automata</option>
-                            <option>Operating System Lab</option>
-                            <option>OOps using JAVA Lab</option>
-                            <option>Python Lab</option>
-                            <option>Mini Project</option>
-                            <option>Python</option>
-                            <option>Ethical Research</option>
-                            <option>Sensor & Instrumentation</option>
-                        </select>
+                    <!-- Subject auto-filled from faculty profile -->
+                    <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                        <span style="color: var(--text-muted); font-size: 0.9rem;">Subject:</span>
+                        <span id="attendance-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 4px 14px; border-radius: 20px; font-size: 0.9rem;">—</span>
                     </div>
                     <div class="table-container">
                         <table>
@@ -237,33 +219,15 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">📊 Internal Marks</h2>
+                    <button class="btn btn-success" id="save-marks-btn" onclick="saveInternalMarks()">💾 Save Marks</button>
                 </div>
 
-                <!-- Subject Selector + Load Button -->
-                <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 24px;">
-                    <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
-                        <label for="marks-subject">Select Subject *</label>
-                        <select class="form-control" id="marks-subject">
-                            <option value="">Choose Subject</option>
-                            <option>Mini Project</option>
-                            <option>Technical Communication</option>
-                            <option>Sensor &amp; Instrumentation</option>
-                            <option>Operating System</option>
-                            <option>Ethical Research</option>
-                            <option>Automata</option>
-                            <option>Python</option>
-                            <option>OOps in java</option>
-                            <option>Operating System Lab</option>
-                            <option>OOps Lab</option>
-                            <option>Python Lab</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-secondary" onclick="loadInternalMarks()">📂 Load / New</button>
-                    <button class="btn btn-success" id="save-marks-btn" onclick="saveInternalMarks()" style="display:none;">💾 Save Marks</button>
+                <!-- Auto subject + hint -->
+                <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">Subject:</span>
+                    <span id="marks-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 4px 14px; border-radius: 20px; font-size: 0.9rem;">—</span>
                 </div>
-
-                <!-- Marks Entry Hint -->
-                <p id="marks-hint" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px; display:none;">
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px;">
                     CT-1 &amp; CT-2 — enter marks obtained. Assignment &amp; Attendance — out of 5.
                 </p>
 
@@ -286,10 +250,10 @@
                     </table>
                 </div>
 
-                <!-- Empty state -->
+                <!-- Empty state —- overridden when table has data -->
                 <div id="marks-empty" style="text-align:center; padding: 40px; color: var(--text-muted);">
-                    <div style="font-size:3rem; margin-bottom:12px;">📊</div>
-                    <p>Select a subject above and click <strong>Load / New</strong> to enter marks.</p>
+                    <div style="font-size:3rem; margin-bottom:12px;">⏳</div>
+                    <p>Loading marks…</p>
                 </div>
             </div>
         </div>
@@ -352,20 +316,11 @@
                         placeholder="e.g., Binary Search Tree Implementation" required>
                 </div>
                 <div class="form-group">
-                    <label for="asg-subject">Subject *</label>
-                    <select class="form-control" id="asg-subject" required>
-                        <option value="">Select Subject</option>
-                        <option>Operating System</option>
-                        <option>OOps using JAVA</option>
-                        <option>Automata</option>
-                        <option>Operating System Lab</option>
-                        <option>OOps using JAVA Lab</option>
-                        <option>Python Lab</option>
-                        <option>Mini Project</option>
-                        <option>Python</option>
-                        <option>Ethical Research</option>
-                        <option>Sensor & Instrumentation</option>
-                    </select>
+                    <label>Subject</label>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                        <span id="asg-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 6px 16px; border-radius: 20px;">—</span>
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Auto-filled from your profile</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="asg-description">Description *</label>
@@ -420,20 +375,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="tt-subject">Subject *</label>
-                    <select class="form-control" id="tt-subject" required>
-                        <option value="">Select Subject</option>
-                        <option>Operating System</option>
-                        <option>OOps using JAVA</option>
-                        <option>Automata</option>
-                        <option>Operating System Lab</option>
-                        <option>OOps using JAVA Lab</option>
-                        <option>Python Lab</option>
-                        <option>Mini Project</option>
-                        <option>Python</option>
-                        <option>Ethical Research</option>
-                        <option>Sensor & Instrumentation</option>
-                    </select>
+                    <label>Subject</label>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                        <span id="tt-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 6px 16px; border-radius: 20px;">—</span>
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Auto-filled from your profile</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="tt-faculty">Faculty Name *</label>
