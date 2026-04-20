@@ -13,6 +13,8 @@ const Assignment = require('./models/Assignment');
 const Submission = require('./models/Submission');
 const Announcement = require('./models/Announcement');
 const Timetable = require('./models/Timetable');
+const AttendanceSession = require('./models/AttendanceSession');
+const StudentStats = require('./models/StudentStats');
 const {
     sendBroadcast,
     announcementTemplate,
@@ -322,6 +324,138 @@ app.get('/api/assignments', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error fetching assignments' });
     }
 });
+
+// ==== [NEW OUTLINED ATTENDANCE ROUTES] ====
+
+// GET /api/attendance/summary (For Student Dashboard)
+app.get('/api/attendance/summary', async (req, res) => {
+    try {
+        const rollNo = req.query.rollNo;
+        if (!rollNo) return res.status(400).json({ success: false, message: 'RollNo required' });
+
+        const student = await StudentStats.findOne({ rollNo });
+        if (!student) return res.status(404).json({ success: false, message: 'Student baseline not found' });
+
+        const stats = student.attendanceStats || [];
+        // Calculate percentages safely
+        const formattedStats = stats.map(st => ({
+            subject: st.subject,
+            totalClasses: st.totalClasses,
+            attendedClasses: st.attendedClasses,
+            percent: st.totalClasses === 0 ? 0 : Math.round((st.attendedClasses / st.totalClasses) * 100)
+        }));
+
+        res.json({ success: true, stats: formattedStats });
+    } catch (error) {
+        console.error('Fetch student attendance error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// GET /api/attendance/faculty-stats (For Faculty Dashboard)
+app.get('/api/attendance/faculty-stats', async (req, res) => {
+    try {
+        const subject = req.query.subject;
+        if (!subject) return res.status(400).json({ success: false, message: 'Subject required' });
+
+        const students = await StudentStats.find({}).select('name rollNo attendanceStats');
+        
+        let totalSum = 0;
+        let validStudentsCount = 0;
+        const studentDetails = [];
+
+        for (const student of students) {
+            const stat = (student.attendanceStats || []).find(s => s.subject === subject);
+            if (stat && stat.totalClasses > 0) {
+                const percent = Math.round((stat.attendedClasses / stat.totalClasses) * 100);
+                totalSum += percent;
+                validStudentsCount++;
+                studentDetails.push({ name: student.name, rollNo: student.rollNo, percent, critical: percent < 75 ? 'Yes' : 'No' });
+            } else {
+                studentDetails.push({ name: student.name, rollNo: student.rollNo, percent: 100, critical: 'No (No classes yet)' });
+            }
+        }
+
+        const averageAttendance = validStudentsCount === 0 ? 100 : Math.round(totalSum / validStudentsCount);
+        
+        // Filter out low attendance (<75%)
+        const lowAttendance = studentDetails.filter(s => s.percent < 75);
+
+        res.json({ success: true, averageAttendance, lowAttendance, allStudents: studentDetails });
+    } catch (error) {
+        console.error('Fetch faculty attendance stats error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// POST /api/attendance (Faculty submits daily attendance)
+app.post('/api/attendance', async (req, res) => {
+    const { date, subject, facultyId, presentRollNos, absentRollNos } = req.body;
+    
+    if (!date || !subject || !facultyId || !presentRollNos || !absentRollNos) {
+        return res.status(400).json({ success: false, message: 'Missing required attendance fields' });
+    }
+
+    try {
+        const formattedDate = new Date(date).setHours(0,0,0,0); // Normalize to midnight
+
+        // 1. Create the logical record (fails if this exact date and subject was already marked)
+        const sessionDateObj = new Date(date);
+        await AttendanceSession.create({
+            date: sessionDateObj,
+            subject,
+            facultyId,
+            presentRollNos,
+            absentRollNos
+        });
+
+        // 2. Update StudentStats Documents (Bulk Update)
+        
+        // Helper: Format atomic updates so it increments only the matched subject inside the array, OR adds to array if absent
+        const updateStudents = async (rollNos, attendedIncrement) => {
+            if (!rollNos || rollNos.length === 0) return;
+
+            for (const roll of rollNos) {
+                // Check if this student already has the subject tracked
+                const student = await StudentStats.findOne({ rollNo: roll, 'attendanceStats.subject': subject });
+
+                if (student) {
+                    await StudentStats.updateOne(
+                        { rollNo: roll, 'attendanceStats.subject': subject },
+                        { $inc: { 
+                            'attendanceStats.$.totalClasses': 1,
+                            'attendanceStats.$.attendedClasses': attendedIncrement 
+                        }}
+                    );
+                } else {
+                    // Push a brand new entry!
+                    await StudentStats.updateOne(
+                        { rollNo: roll },
+                        { $push: { 
+                            attendanceStats: { subject: subject, totalClasses: 1, attendedClasses: attendedIncrement } 
+                        }}
+                    );
+                }
+            }
+        };
+
+        // Increment present -> totalClasses+1, attendedClasses+1
+        await updateStudents(presentRollNos, 1);
+        
+        // Increment absent -> totalClasses+1, attendedClasses+0
+        await updateStudents(absentRollNos, 0);
+
+        res.json({ success: true, message: 'Attendance marked successfully!' });
+
+    } catch (error) {
+        if (error.code === 11000) { // Duplicate key error
+            return res.status(400).json({ success: false, message: 'Attendance for this subject has already been marked today.' });
+        }
+        console.error('Mark attendance error:', error);
+        res.status(500).json({ success: false, message: 'Server error marking attendance' });
+    }
+});
+
 
 // ---- Submission Routes ----
 

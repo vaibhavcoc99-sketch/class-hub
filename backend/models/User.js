@@ -8,7 +8,14 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: ['student', 'faculty'], required: true },
     rollNo: { type: String }, // For students
     department: { type: String }, // For faculty
-    subjects: [{ type: String }] // For faculty — their allowed subjects
+    subjects: [{ type: String }], // For faculty — their allowed subjects
+    
+    // Specifically for tracking student attendance aggregates
+    attendanceStats: [{
+        subject: { type: String },
+        totalClasses: { type: Number, default: 0 },
+        attendedClasses: { type: Number, default: 0 }
+    }]
 }, { timestamps: true });
 
 // Hash password before saving

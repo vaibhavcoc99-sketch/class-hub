@@ -32,11 +32,9 @@ const API_BASE = 'http://localhost:5001';
 
 let timetableData = {}; // fetched from MongoDB
 
-const attendanceData = [];
-
-const lowAttendanceStudents = [];
-
-const mockStudents = GLOBAL_STUDENT_LIST;
+let attendanceData = [];
+let lowAttendanceStudents = [];
+let assignedStudents = [];
 
 // ---- Tab Switching ----
 function switchTab(tabName) {
@@ -251,17 +249,36 @@ async function fetchTimetable() {
     }
 }
 
-function renderAttendanceProgress() {
+// Fetch live statistics for exactly this faculty's subject
+async function fetchFacultyStats() {
     const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
-    const dept = user.department || 'Subject';
-    
-    // Auto-generate realistic mock data for their specific subject
-    const subjectAttendance = [
-        { subject: dept, percent: Math.floor(Math.random() * (95 - 75 + 1)) + 75 }
-    ];
-    
+    if (!user.department) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/attendance/faculty-stats?subject=${encodeURIComponent(user.department)}`);
+        const data = await res.json();
+        if (data.success) {
+            assignedStudents = data.allStudents || [];
+            lowAttendanceStudents = data.lowAttendance || [];
+            
+            // Only tracking ONE subject per faculty
+            attendanceData = [{
+                subject: user.department,
+                percent: data.averageAttendance
+            }];
+
+            renderAttendanceProgress();
+            renderLowAttendance();
+            renderAttendanceMarking();
+        }
+    } catch (err) {
+        console.error('Failed to fetch attendance stats:', err);
+    }
+}
+
+function renderAttendanceProgress() {
     const container = document.getElementById('attendance-progress');
-    container.innerHTML = subjectAttendance.map(a => {
+    container.innerHTML = attendanceData.map(a => {
         const colorClass = a.percent >= 85 ? '' : a.percent >= 75 ? 'warning' : 'danger';
         const textColor = a.percent >= 85 ? 'var(--success-light)' : a.percent >= 75 ? 'var(--warning)' : 'var(--danger-light)';
         return `
@@ -280,6 +297,10 @@ function renderAttendanceProgress() {
 
 function renderLowAttendance() {
     const container = document.getElementById('low-attendance-body');
+    if (lowAttendanceStudents.length === 0) {
+        container.innerHTML = '<tr><td colspan="5" style="text-align: center;">No students have low attendance! 🎉</td></tr>';
+        return;
+    }
     container.innerHTML = lowAttendanceStudents.map(s => `
         <tr>
             <td>${s.rollNo}</td>
@@ -293,13 +314,14 @@ function renderLowAttendance() {
 
 function renderAttendanceMarking() {
     const container = document.getElementById('attendance-marking-body');
-    container.innerHTML = mockStudents.map(s => `
+    // Using the original global 79-student list directly so faculty can see everyone
+    container.innerHTML = GLOBAL_STUDENT_LIST.map(s => `
         <tr>
             <td>${s.rollNo}</td>
             <td>${s.name}</td>
             <td>
                 <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                    <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--success); cursor: pointer;">
+                    <input type="checkbox" class="attendance-checkbox" data-roll="${s.rollNo}" checked style="width: 18px; height: 18px; accent-color: var(--success); cursor: pointer;">
                     <span class="badge badge-success" style="font-size: 0.75rem;">Present</span>
                 </label>
             </td>
@@ -307,7 +329,7 @@ function renderAttendanceMarking() {
     `).join('');
 
     // Toggle badge text on checkbox change
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    container.querySelectorAll('.attendance-checkbox').forEach(cb => {
         cb.addEventListener('change', function () {
             const badge = this.nextElementSibling;
             if (this.checked) {
@@ -325,7 +347,7 @@ function renderAttendanceMarking() {
 
 function updateStats() {
     const active = facultyAssignments.filter(a => a.status === 'active').length;
-    const avg = 87; // Real mock logic could go here based on generated subjectAttendance
+    const avg = attendanceData.length > 0 ? attendanceData[0].percent : 0; // Derived directly from the single subject tracked
 
     document.getElementById('stat-active-assignments').textContent = active;
     document.getElementById('stat-avg-attendance').textContent = avg + '%';
@@ -563,13 +585,83 @@ function toggleAttendanceMode() {
     }
 }
 
-function saveAttendance() {
-    attendanceMode = false;
-    document.getElementById('attendance-marking').style.display = 'none';
-    const btn = document.getElementById('mark-attendance-btn');
-    btn.textContent = '📋 Mark Attendance';
-    btn.className = 'btn btn-primary';
-    showToast('Attendance saved successfully!', 'success');
+async function saveAttendance() {
+    const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+    
+    // Read subject from the active HTML dropdown instead of strictly enforcing user.department
+    const subjectDropdown = document.getElementById('attendance-subject');
+    const selectedSubject = subjectDropdown ? subjectDropdown.value : user.department;
+    
+    if (!selectedSubject) return showToast('Error: No subject selected.', 'error');
+
+    const checkboxes = document.querySelectorAll('.attendance-checkbox');
+    const presentRollNos = [];
+    const absentRollNos = [];
+
+    checkboxes.forEach(cb => {
+        const roll = cb.getAttribute('data-roll');
+        if (cb.checked) {
+            presentRollNos.push(roll);
+        } else {
+            absentRollNos.push(roll);
+        }
+    });
+
+    const btn = document.getElementById('mark-attendance-btn') || document.querySelector('.btn-success[onclick="saveAttendance()"]');
+    if (btn) {
+        btn.textContent = '⏳ Saving...';
+        btn.disabled = true;
+    }
+
+    try {
+        const payload = {
+            date: new Date().toISOString(),
+            subject: selectedSubject,
+            facultyId: user.id || user._id, // Support different token formats
+            presentRollNos,
+            absentRollNos
+        };
+
+        const res = await fetch(`${API_BASE}/api/attendance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        
+        if (btn) {
+            btn.textContent = 'Save Attendance';
+            btn.disabled = false;
+        }
+
+        if (data.success) {
+            showToast('✅ Attendance marked securely!', 'success');
+            
+            // Clean up UI state
+            attendanceMode = false;
+            document.getElementById('attendance-marking').style.display = 'none';
+            const triggerBtn = document.getElementById('mark-attendance-btn');
+            if (triggerBtn) {
+                triggerBtn.textContent = '📋 Mark Attendance';
+                triggerBtn.className = 'btn btn-primary';
+            }
+            
+            // Re-fetch the live analytics
+            await fetchFacultyStats();
+            updateStats();
+        } else {
+            showToast(data.message || 'Failed to save attendance', 'error');
+        }
+
+    } catch (err) {
+        console.error('Failed to post attendance', err);
+        showToast('Network Error. Is the backend running?', 'error');
+        if (btn) {
+            btn.textContent = 'Save Attendance';
+            btn.disabled = false;
+        }
+    }
 }
 
 async function sendAlert(studentName, studentEmail) {
@@ -661,13 +753,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderRecentActivity();
     renderFacultyAnnouncements();
     renderFacultyTimetable();
-    renderAttendanceProgress();
-    renderLowAttendance();
-    fetchAssignments(); // Loads assignments dynamically from MongoDB
-    fetchTimetable();   // Loads timetable from MongoDB
+    
+    // Core data fetches
+    await fetchFacultyStats(); // Loads students & attendance mapping completely
+    await fetchAssignments(); // Loads assignments dynamically from MongoDB
+    await fetchTimetable();   // Loads timetable from MongoDB
     initSubjectDropdown(); // Restrict subject choices to this faculty's subjects
 
-    // Fetch and display registered student count in Overview
+    // Update global dashboard stats immediately after fetches
+    updateStats();
     try {
         const res = await fetch(`${API_BASE}/api/notify/students-count`);
         const data = await res.json();

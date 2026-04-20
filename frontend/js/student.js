@@ -33,14 +33,7 @@ const API_BASE = 'http://localhost:5001';
 
 let timetableData = {}; // fetched from MongoDB
 
-const attendanceData = [
-    { subject: 'Operating System', percent: 92 },
-    { subject: 'OOps using JAVA', percent: 88 },
-    { subject: 'Automata', percent: 85 },
-    { subject: 'Python', percent: 90 },
-    { subject: 'Ethical Research', percent: 78 },
-    { subject: 'Sensor & Instrumentation', percent: 94 }
-];
+let attendanceData = []; // dynamically fetched from MongoDB
 
 // ---- Tab Switching ----
 function switchTab(tabName) {
@@ -401,6 +394,30 @@ function renderTodaySchedule() {
     `).join('');
 }
 
+// Fetch attendance summary from MongoDB
+async function fetchStudentAttendance() {
+    try {
+        const user = JSON.parse(localStorage.getItem('classhub_user') || '{}');
+        if (!user.rollNo) return;
+
+        const res = await fetch(`${API_BASE}/api/attendance/summary?rollNo=${user.rollNo}`);
+        const data = await res.json();
+        
+        if (data.success && data.stats) {
+            attendanceData = data.stats;
+            renderAttendanceBreakdown();
+            updateStats();
+            
+            // Re-render chart if we are on the analytics tab
+            if (document.getElementById('analytics').classList.contains('active')) {
+                initCharts();
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch attendance:', err);
+    }
+}
+
 // Fetch timetable from MongoDB
 async function fetchTimetable() {
     try {
@@ -490,6 +507,10 @@ function renderFullTimetable() {
 
 function renderAttendanceBreakdown() {
     const container = document.getElementById('attendance-breakdown');
+    if (attendanceData.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No attendance records found yet.</div>';
+        return;
+    }
     container.innerHTML = attendanceData.map(a => {
         const colorClass = a.percent >= 85 ? '' : a.percent >= 75 ? 'warning' : 'danger';
         const textColor = a.percent >= 85 ? 'var(--success-light)' : a.percent >= 75 ? 'var(--warning)' : 'var(--danger-light)';
@@ -509,7 +530,10 @@ function renderAttendanceBreakdown() {
 
 function updateStats() {
     const pending = assignments.filter(a => !a.submitted).length;
-    const avg = Math.round(attendanceData.reduce((s, a) => s + a.percent, 0) / attendanceData.length);
+    const avg = attendanceData.length > 0 
+        ? Math.round(attendanceData.reduce((s, a) => s + a.percent, 0) / attendanceData.length)
+        : 100; // Default to 100% if no classes have happened yet
+        
     const unread = announcements.filter(a => a.unread).length;
 
     document.getElementById('stat-pending').textContent = pending;
@@ -662,61 +686,53 @@ async function submitAssignment(e) {
 
 // ---- Charts ----
 let chartsInitialized = false;
+let attendanceChartInstance = null;
 
 function initCharts() {
-    if (chartsInitialized) return;
-    chartsInitialized = true;
+    if (attendanceChartInstance) {
+        attendanceChartInstance.destroy();
+    }
 
-    // Attendance Chart
-    const attCtx = document.getElementById('attendance-chart').getContext('2d');
-    new Chart(attCtx, {
-        type: 'bar',
+    const attCtx = document.getElementById('attendance-chart');
+    if (!attCtx) return;
+    
+    let labels = ['No Data Yet'];
+    let dataPoints = [100];
+    let colors = ['rgba(255, 255, 255, 0.1)'];
+    let borders = ['rgba(255, 255, 255, 0.2)'];
+
+    if (attendanceData.length > 0) {
+        labels = attendanceData.map(a => a.subject);
+        dataPoints = attendanceData.map(a => a.percent);
+        colors = attendanceData.map(a => 
+            a.percent >= 85 ? 'rgba(46, 213, 115, 0.8)' : 
+            a.percent >= 75 ? 'rgba(255, 165, 2, 0.8)' : 
+            'rgba(255, 71, 87, 0.8)'
+        );
+        borders = attendanceData.map(a => 
+            a.percent >= 85 ? 'rgba(46, 213, 115, 1)' : 
+            a.percent >= 75 ? 'rgba(255, 165, 2, 1)' : 
+            'rgba(255, 71, 87, 1)'
+        );
+    }
+
+    attendanceChartInstance = new Chart(attCtx.getContext('2d'), {
+        type: 'doughnut',
         data: {
-            labels: attendanceData.map(a => a.subject),
+            labels: labels,
             datasets: [{
-                label: 'Attendance %',
-                data: attendanceData.map(a => a.percent),
-                backgroundColor: attendanceData.map(a =>
-                    a.percent >= 85 ? 'rgba(16,185,129,0.7)' :
-                    a.percent >= 75 ? 'rgba(245,158,11,0.7)' :
-                    'rgba(239,68,68,0.7)'
-                ),
-                borderColor: attendanceData.map(a =>
-                    a.percent >= 85 ? '#10b981' :
-                    a.percent >= 75 ? '#f59e0b' :
-                    '#ef4444'
-                ),
-                borderWidth: 2,
-                borderRadius: 8,
-                borderSkipped: false
+                data: dataPoints,
+                backgroundColor: colors,
+                borderColor: borders,
+                borderWidth: 2
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
             plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#94a3b8',
-                    borderColor: 'rgba(99,102,241,0.3)',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    padding: 12
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#94a3b8', font: { size: 11 } }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 45 }
-                }
+                legend: { position: 'right', labels: { color: 'var(--text-primary)', font: { family: "'Inter', sans-serif" } } }
             }
         }
     });
@@ -785,7 +801,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setupDropZone();
     
     // Fetch from MongoDB
-    fetchAssignments();
     fetchAnnouncements();
+    fetchAssignments();
     fetchTimetable();
+    fetchStudentAttendance(); // Load real attendance
 });
