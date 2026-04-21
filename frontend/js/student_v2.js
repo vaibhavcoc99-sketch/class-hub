@@ -257,6 +257,111 @@ function renderRecentAnnouncements() {
     }).join('');
 }
 
+// Render upcoming deadlines on the Overview tab (pending assignments sorted by due date)
+function renderUpcomingDeadlines() {
+    const container = document.getElementById('upcoming-deadlines');
+    if (!container) return;
+
+    const pending = assignments
+        .filter(a => !a.submitted && a.dueDate)
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0, 4);
+
+    if (pending.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center; font-size: 0.9rem;">No upcoming deadlines 🎉</div>';
+        return;
+    }
+
+    container.innerHTML = pending.map(a => {
+        const due = new Date(a.dueDate);
+        const now = new Date();
+        const diffMs = due - now;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        let urgency = '';
+        let urgencyColor = 'var(--text-muted)';
+        if (diffDays < 0) {
+            urgency = 'Overdue';
+            urgencyColor = 'var(--danger-light, #ef4444)';
+        } else if (diffDays === 0) {
+            urgency = 'Due today';
+            urgencyColor = 'var(--danger-light, #ef4444)';
+        } else if (diffDays === 1) {
+            urgency = 'Due tomorrow';
+            urgencyColor = '#f97316';
+        } else if (diffDays <= 3) {
+            urgency = `Due in ${diffDays} days`;
+            urgencyColor = '#f59e0b';
+        } else {
+            urgency = `Due in ${diffDays} days`;
+            urgencyColor = 'var(--success-light, #22c55e)';
+        }
+
+        const dateStr = due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        return `
+            <div class="notification-item">
+                <div class="notification-content">
+                    <h4>📝 ${a.title}</h4>
+                    <p>${a.subject} — ${a.faculty}</p>
+                    <div class="notification-time" style="color: ${urgencyColor}; font-weight: 600;">${urgency} (${dateStr})</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Render all assignments in the Assignments tab
+function renderAllAssignments() {
+    const container = document.getElementById('all-assignments');
+    if (!container) return;
+
+    if (assignments.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                <div style="font-size: 2.5rem; margin-bottom: 10px;">📝</div>
+                <p style="font-size: 1rem; font-weight: 600;">No assignments yet</p>
+                <p style="font-size: 0.85rem; margin-top: 6px; opacity: 0.7;">Assignments posted by faculty will appear here.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = assignments.map(a => {
+        const due = a.dueDate ? new Date(a.dueDate) : null;
+        const now = new Date();
+        const isOverdue = due && due < now && !a.submitted;
+        const dateStr = due
+            ? due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+            : 'No deadline';
+
+        const statusLabel = a.submitted
+            ? '<span style="color: var(--success-light, #22c55e); font-weight: 600;">✅ Submitted</span>'
+            : isOverdue
+                ? '<span style="color: var(--danger-light, #ef4444); font-weight: 600;">⚠️ Overdue</span>'
+                : '<span style="color: #f59e0b; font-weight: 600;">⏳ Pending</span>';
+
+        const submitBtn = a.submitted
+            ? ''
+            : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal('${a.id}')">Submit</button>`;
+
+        return `
+            <div class="notification-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="notification-content" style="flex: 1;">
+                    <h4>📝 ${a.title}</h4>
+                    <p>${a.subject} — ${a.faculty}</p>
+                    ${a.description ? `<p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">${a.description}</p>` : ''}
+                    <div class="notification-time">
+                        📅 ${dateStr} &nbsp;·&nbsp; ${statusLabel}
+                    </div>
+                </div>
+                <div style="margin-left: 12px; flex-shrink: 0;">
+                    ${submitBtn}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 // IntersectionObserver: mark announcements as read when scrolled into view
 let announcementObserver = null;
 
