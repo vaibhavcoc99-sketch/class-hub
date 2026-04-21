@@ -40,6 +40,7 @@ const PORT = process.env.PORT || 5001;
 
 // ---- Middleware ----
 app.use(cors());
+app.use(express.static('public'));
 app.use(express.json());
 
 // Serve frontend static files
@@ -48,45 +49,45 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // ---- Default Timetable Data (used to seed DB on first run) ----
 const DEFAULT_TIMETABLE = {
     Monday: [
-        { time: '09:10 - 10:50', subject: 'Mini Project',             faculty: 'Mr. Abhishek Nagar',  room: 'OS Lab',   isBreak: false },
-        { time: '10:50 - 11:40', subject: 'Technical Communication',   faculty: 'Dr. Pragati Shukla',  room: 'Lt 21',    isBreak: false },
-        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation',  faculty: 'Mr. Adeeb',           room: 'EED 201',  isBreak: false },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
-        { time: '02:00 - 03:40', subject: 'Operating System',          faculty: 'Mr. Deepanshu Singh', room: 'Lt 21',    isBreak: false },
-        { time: '03:40 - 04:30', subject: 'Ethical Research',          faculty: 'Miss Kajal',          room: 'Lt 21',    isBreak: false }
+        { time: '09:10 - 10:50', subject: 'Mini Project', faculty: 'Mr. Abhishek Nagar', room: 'OS Lab', isBreak: false },
+        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21', isBreak: false },
+        { time: '11:40 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Mr. Adeeb', room: 'EED 201', isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Operating System', faculty: 'Mr. Deepanshu Singh', room: 'Lt 21', isBreak: false },
+        { time: '03:40 - 04:30', subject: 'Ethical Research', faculty: 'Miss Kajal', room: 'Lt 21', isBreak: false }
     ],
     Tuesday: [
-        { time: '09:10 - 10:50', subject: 'Operating System',          faculty: 'Mr. Deepanshu Singh', room: 'Lt 21',    isBreak: false },
-        { time: '10:50 - 12:30', subject: 'Automata',                  faculty: 'Mr. Rakesh',          room: 'Lt 21',    isBreak: false },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
-        { time: '02:00 - 03:40', subject: 'Python Lab',                faculty: 'Mr. Ahmed Husan',     room: 'OS Lab',   isBreak: false },
-        { time: '03:40 - 04:30', subject: 'OOPs in Java',              faculty: 'Dr. Manik Chandra',   room: 'Lt 21',    isBreak: false }
+        { time: '09:10 - 10:50', subject: 'Operating System', faculty: 'Mr. Deepanshu Singh', room: 'Lt 21', isBreak: false },
+        { time: '10:50 - 12:30', subject: 'Automata', faculty: 'Mr. Rakesh', room: 'Lt 21', isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Python Lab', faculty: 'Mr. Ahmed Husan', room: 'OS Lab', isBreak: false },
+        { time: '03:40 - 04:30', subject: 'OOPs in Java', faculty: 'Dr. Manik Chandra', room: 'Lt 21', isBreak: false }
     ],
     Wednesday: [
-        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation',  faculty: 'Mr. Adeeb',           room: 'EED 201',  isBreak: false },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
-        { time: '02:00 - 03:40', subject: 'Python',                    faculty: 'Mr. Ahmed Husan',     room: 'Lt 21',    isBreak: false },
-        { time: '03:40 - 04:30', subject: 'Automata',                  faculty: 'Mr. Rakesh',          room: 'Lt 21',    isBreak: false }
+        { time: '10:50 - 12:30', subject: 'Sensor & Instrumentation', faculty: 'Mr. Adeeb', room: 'EED 201', isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Python', faculty: 'Mr. Ahmed Husan', room: 'Lt 21', isBreak: false },
+        { time: '03:40 - 04:30', subject: 'Automata', faculty: 'Mr. Rakesh', room: 'Lt 21', isBreak: false }
     ],
     Thursday: [
-        { time: '09:10 - 10:50', subject: 'Automata',                  faculty: 'Mr. Rakesh',          room: 'Lt 21',    isBreak: false },
-        { time: '10:50 - 11:40', subject: 'Technical Communication',   faculty: 'Dr. Pragati Shukla',  room: 'Lt 21',    isBreak: false },
-        { time: '11:40 - 12:30', subject: 'Ethical Research',          faculty: 'Miss Kajal',          room: 'Lt 21',    isBreak: false },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
-        { time: '02:00 - 03:40', subject: 'Operating System Lab',      faculty: 'Mr. Deepanshu Singh', room: 'DBMS Lab', isBreak: false }
+        { time: '09:10 - 10:50', subject: 'Automata', faculty: 'Mr. Rakesh', room: 'Lt 21', isBreak: false },
+        { time: '10:50 - 11:40', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21', isBreak: false },
+        { time: '11:40 - 12:30', subject: 'Ethical Research', faculty: 'Miss Kajal', room: 'Lt 21', isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Operating System Lab', faculty: 'Mr. Deepanshu Singh', room: 'DBMS Lab', isBreak: false }
     ],
     Friday: [
-        { time: '10:00 - 11:40', subject: 'OOPs in Java',              faculty: 'Dr. Manik Chandra',   room: 'Lt 21',    isBreak: false },
-        { time: '11:40 - 12:30', subject: 'Technical Communication',   faculty: 'Dr. Pragati Shukla',  room: 'Lt 21',    isBreak: false },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
-        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation',  faculty: 'Mr. Adeeb',           room: 'EED 201',  isBreak: false },
-        { time: '03:40 - 04:30', subject: 'Operating System',          faculty: 'Mr. Deepanshu Singh', room: 'Lt 21',    isBreak: false }
+        { time: '10:00 - 11:40', subject: 'OOPs in Java', faculty: 'Dr. Manik Chandra', room: 'Lt 21', isBreak: false },
+        { time: '11:40 - 12:30', subject: 'Technical Communication', faculty: 'Dr. Pragati Shukla', room: 'Lt 21', isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '02:00 - 03:40', subject: 'Sensor & Instrumentation', faculty: 'Mr. Adeeb', room: 'EED 201', isBreak: false },
+        { time: '03:40 - 04:30', subject: 'Operating System', faculty: 'Mr. Deepanshu Singh', room: 'Lt 21', isBreak: false }
     ],
     Saturday: [
-        { time: '09:10 - 10:50', subject: 'OOPs Lab',                  faculty: 'Dr. Manik Chandra',   room: 'DBMS Lab', isBreak: false },
-        { time: '11:40 - 12:30', subject: 'OOPs in Java',              faculty: 'Dr. Manik Chandra',   room: 'Lt 21',    isBreak: false },
-        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK',            faculty: '',                    room: '',         isBreak: true  },
-        { time: '03:40 - 04:30', subject: 'Python',                    faculty: 'Mr. Ahmed Husan',     room: 'Lt 21',    isBreak: false }
+        { time: '09:10 - 10:50', subject: 'OOPs Lab', faculty: 'Dr. Manik Chandra', room: 'DBMS Lab', isBreak: false },
+        { time: '11:40 - 12:30', subject: 'OOPs in Java', faculty: 'Dr. Manik Chandra', room: 'Lt 21', isBreak: false },
+        { time: '12:30 - 02:00', subject: '🍽️ LUNCH BREAK', faculty: '', room: '', isBreak: true },
+        { time: '03:40 - 04:30', subject: 'Python', faculty: 'Mr. Ahmed Husan', room: 'Lt 21', isBreak: false }
     ],
     Sunday: []
 };
@@ -395,7 +396,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 app.post('/api/assignments', async (req, res) => {
     try {
         const { title, course, type, deadline, description, fileUrl, facultyId, facultyName } = req.body;
-        
+
         if (!title || !course || !deadline) {
             return res.status(400).json({ success: false, message: 'Title, course, and deadline are required' });
         }
@@ -461,7 +462,7 @@ app.get('/api/attendance/faculty-stats', async (req, res) => {
         if (!subject) return res.status(400).json({ success: false, message: 'Subject required' });
 
         const students = await StudentStats.find({}).select('name rollNo attendanceStats');
-        
+
         let totalSum = 0;
         let validStudentsCount = 0;
         const studentDetails = [];
@@ -479,7 +480,7 @@ app.get('/api/attendance/faculty-stats', async (req, res) => {
         }
 
         const averageAttendance = validStudentsCount === 0 ? 100 : Math.round(totalSum / validStudentsCount);
-        
+
         // Filter out low attendance (<75%)
         const lowAttendance = studentDetails.filter(s => s.percent < 75);
 
@@ -547,13 +548,13 @@ app.post('/api/attendance/alert', async (req, res) => {
 // POST /api/attendance (Faculty submits daily attendance)
 app.post('/api/attendance', async (req, res) => {
     const { date, subject, facultyId, presentRollNos, absentRollNos } = req.body;
-    
+
     if (!date || !subject || !facultyId || !presentRollNos || !absentRollNos) {
         return res.status(400).json({ success: false, message: 'Missing required attendance fields' });
     }
 
     try {
-        const formattedDate = new Date(date).setHours(0,0,0,0); // Normalize to midnight
+        const formattedDate = new Date(date).setHours(0, 0, 0, 0); // Normalize to midnight
 
         // 1. Create the logical record (fails if this exact date and subject was already marked)
         const sessionDateObj = new Date(date);
@@ -566,7 +567,7 @@ app.post('/api/attendance', async (req, res) => {
         });
 
         // 2. Update StudentStats Documents (Bulk Update)
-        
+
         // Helper: Format atomic updates so it increments only the matched subject inside the array, OR adds to array if absent
         const updateStudents = async (rollNos, attendedIncrement) => {
             if (!rollNos || rollNos.length === 0) return;
@@ -578,18 +579,22 @@ app.post('/api/attendance', async (req, res) => {
                 if (student) {
                     await StudentStats.updateOne(
                         { rollNo: roll, 'attendanceStats.subject': subject },
-                        { $inc: { 
-                            'attendanceStats.$.totalClasses': 1,
-                            'attendanceStats.$.attendedClasses': attendedIncrement 
-                        }}
+                        {
+                            $inc: {
+                                'attendanceStats.$.totalClasses': 1,
+                                'attendanceStats.$.attendedClasses': attendedIncrement
+                            }
+                        }
                     );
                 } else {
                     // Push a brand new entry!
                     await StudentStats.updateOne(
                         { rollNo: roll },
-                        { $push: { 
-                            attendanceStats: { subject: subject, totalClasses: 1, attendedClasses: attendedIncrement } 
-                        }}
+                        {
+                            $push: {
+                                attendanceStats: { subject: subject, totalClasses: 1, attendedClasses: attendedIncrement }
+                            }
+                        }
                     );
                 }
             }
@@ -597,7 +602,7 @@ app.post('/api/attendance', async (req, res) => {
 
         // Increment present -> totalClasses+1, attendedClasses+1
         await updateStudents(presentRollNos, 1);
-        
+
         // Increment absent -> totalClasses+1, attendedClasses+0
         await updateStudents(absentRollNos, 0);
 
@@ -619,7 +624,7 @@ app.post('/api/attendance', async (req, res) => {
 app.post('/api/submissions', upload.single('file'), async (req, res) => {
     try {
         const { assignmentId, studentId, studentName, link, notes } = req.body;
-        
+
         if (!assignmentId || !studentId) {
             return res.status(400).json({ success: false, message: 'Assignment ID and Student ID are required' });
         }
@@ -810,8 +815,8 @@ app.get('/api/internal-marks/student/:rollNo', async (req, res) => {
             const m = (doc.marks || []).find(s => s.rollNo === rollNo);
             return {
                 subject: doc.subject,
-                ct1:             m ? m.ct1             : null,
-                ct2:             m ? m.ct2             : null,
+                ct1: m ? m.ct1 : null,
+                ct2: m ? m.ct2 : null,
                 assignmentMarks: m ? m.assignmentMarks : null,
                 attendanceMarks: m ? m.attendanceMarks : null
             };
@@ -1019,9 +1024,9 @@ app.post('/api/notify/alert', async (req, res) => {
 
         const alertLabels = {
             low_attendance: '⚠️ Attendance Alert',
-            exam:           '📋 Exam Notice',
-            holiday:        '🎉 Holiday Notice',
-            general:        '🔔 Notice'
+            exam: '📋 Exam Notice',
+            holiday: '🎉 Holiday Notice',
+            general: '🔔 Notice'
         };
         const subjectLine = `${alertLabels[alertType] || '🔔'}: ${title}`;
         const html = alertTemplate({ title, message, alertType, facultyName });
@@ -1066,4 +1071,4 @@ server.listen(PORT, () => {
 });
 
 // Keep process alive explicitly
-setInterval(() => {}, 1000 * 60 * 60);
+setInterval(() => { }, 1000 * 60 * 60);

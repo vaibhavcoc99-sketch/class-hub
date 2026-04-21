@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassHub — Student Dashboard</title>
+    <meta name="description" content="Student dashboard for ClassHub — view announcements, assignments, timetable, and analytics.">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body class="page-enter">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">CLASSHUB</div>
+            <div class="header-actions">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">S</div>
+                    <div class="user-details">
+                        <h3 id="user-name">Student</h3>
+                        <div class="user-role" id="user-role-label">Student</div>
+                    </div>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">⏻ Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav" id="student-nav">
+            <button class="nav-btn active" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="nav-btn" onclick="switchTab('announcements')">
+                🔔 Announcements
+                <span class="badge" id="announcement-badge" style="display:none;">0</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('assignments')">📝 Assignments</button>
+            <button class="nav-btn" onclick="switchTab('timetable')">📅 Timetable</button>
+            <button class="nav-btn" onclick="switchTab('analytics')">📈 Analytics</button>
+        </nav>
+
+        <!-- ===== Overview Tab ===== -->
+        <div id="overview" class="tab-content active">
+            <!-- Stats -->
+            <div class="grid-4 stagger-children">
+                <div class="stat-card purple">
+                    <div class="stat-info">
+                        <h3 id="stat-pending">4</h3>
+                        <p>Pending Assignments</p>
+                    </div>
+                    <div class="stat-icon">📚</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-info">
+                        <h3 id="stat-attendance">87%</h3>
+                        <p>Attendance</p>
+                    </div>
+                    <div class="stat-icon">✓</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-info">
+                        <h3 id="stat-announcements">6</h3>
+                        <p>New Announcements</p>
+                    </div>
+                    <div class="stat-icon">📢</div>
+                </div>
+                <div class="stat-card cyan">
+                    <div class="stat-info">
+                        <h3 id="stat-classes">0</h3>
+                        <p>Today's Classes</p>
+                    </div>
+                    <div class="stat-icon">🏫</div>
+                </div>
+            </div>
+
+            <!-- Today's Schedule (Overview) -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title" id="overview-today-title">📅 Today's Schedule</h2>
+                    <button class="btn btn-secondary btn-sm" onclick="switchTab('timetable')">View Full Week →</button>
+                </div>
+                <div class="timetable" id="overview-today-schedule">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <!-- Two-column: Recent Announcements + Upcoming Deadlines -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Announcements</h2>
+                        <button class="btn btn-ghost btn-sm" onclick="switchTab('announcements')">See All →</button>
+                    </div>
+                    <div id="recent-announcements">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Upcoming Deadlines</h2>
+                        <button class="btn btn-ghost btn-sm" onclick="switchTab('assignments')">See All →</button>
+                    </div>
+                    <div id="upcoming-deadlines">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Announcements Tab (WhatsApp-style) ===== -->
+        <div id="announcements" class="tab-content">
+            <div class="chat-container">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <div class="chat-avatar">📢</div>
+                        <div class="chat-header-info">
+                            <h3>Class Announcements</h3>
+                            <span id="chat-subtitle" class="chat-subtitle">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="markAllAnnouncementsRead()" title="Mark all as read">✓✓ Mark all read</button>
+                    </div>
+                </div>
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="all-announcements">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Assignments Tab ===== -->
+        <div id="assignments" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">My Assignments</h2>
+                </div>
+                <div id="all-assignments">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Timetable Tab ===== -->
+        <div id="timetable" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Weekly Timetable — CSE 2nd Year</h2>
+                </div>
+                <div class="timetable" id="full-timetable">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Analytics Tab ===== -->
+        <div id="analytics" class="tab-content">
+            <!-- Internal Marks Bar Chart (full width) -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Internal Marks Overview</h2>
+                </div>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="marks-bar-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Internal Marks Table (full width) -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📋 Subject-wise Internal Marks</h2>
+                </div>
+                <div id="internal-marks-loading" style="text-align:center; padding:30px; color:var(--text-muted);">
+                    ⏳ Loading marks…
+                </div>
+                <div class="table-container" id="internal-marks-table-wrap" style="display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th style="text-align:center;">CT-1</th>
+                                <th style="text-align:center;">CT-2</th>
+                                <th style="text-align:center;">Assignment<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                                <th style="text-align:center;">Attendance<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                            </tr>
+                        </thead>
+                        <tbody id="internal-marks-body">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="internal-marks-empty" style="display:none; text-align:center; padding:30px; color:var(--text-muted);">
+                    <div style="font-size:2.5rem; margin-bottom:10px;">📊</div>
+                    <p>No marks have been entered by your faculty yet.</p>
+                </div>
+            </div>
+
+            <!-- Subject-wise Class Attendance -->
+            <div class="card" style="margin-top: 24px;">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Subject-wise Class Attendance</h2>
+                </div>
+                <div id="attendance-loading" style="text-align:center; padding:30px; color:var(--text-muted);">
+                    ⏳ Loading attendance…
+                </div>
+                <div id="attendance-container" style="display:none; padding: 20px;">
+                    <!-- Filled by JS -->
+                </div>
+                <div id="attendance-empty" style="display:none; text-align:center; padding:30px; color:var(--text-muted);">
+                    <div style="font-size:2.5rem; margin-bottom:10px;">📊</div>
+                    <p>No attendance data available yet.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Submit Assignment Modal -->
+    <div id="submitAssignmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Submit Assignment</h2>
+                <button class="close-modal" onclick="closeModal('submitAssignmentModal')">&times;</button>
+            </div>
+            <form onsubmit="submitAssignment(event)">
+                <div class="form-group">
+                    <label>Assignment</label>
+                    <input type="text" class="form-control" id="submit-assignment-title" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label>Upload PDF Document *</label>
+                    <div id="drop-zone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📄</div>
+                            <p>Drag & drop your PDF here</p>
+                            <span class="or-text">or</span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                            <input type="file" id="file-input" accept="application/pdf" hidden>
+                        </div>
+                        <div id="file-display" style="display: none;">
+                            <div class="file-info">
+                                <span class="file-name" id="file-name-display">my_assignment.pdf</span>
+                                <button type="button" class="close-modal" onclick="clearFile()" style="position: relative; right: 0; top: 0; padding: 0 5px; color: var(--danger);">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="submission-link">Optional Link (GitHub / Drive)</label>
+                    <input type="url" class="form-control" id="submission-link" placeholder="https://github.com/...">
+                </div>
+                <div class="form-group">
+                    <label for="submission-notes">Notes (optional)</label>
+                    <textarea class="form-control" id="submission-notes" placeholder="Any additional info for the faculty..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('submitAssignmentModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/student_v2.js"></script>
+</body>
+</html>

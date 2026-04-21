@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassHub — Faculty Dashboard</title>
+    <meta name="description"
+        content="Faculty dashboard for ClassHub — manage announcements, assignments, timetable, and attendance.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="page-enter">//hello world
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">CLASSHUB</div>
+            <div class="header-actions">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">F</div>
+                    <div class="user-details">
+                        <h3 id="user-name">Faculty</h3>
+                        <div class="user-role" id="user-role-label">Faculty</div>
+                    </div>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">⏻ Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-btn active" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="nav-btn" onclick="switchTab('announcements')">📢 Announcements</button>
+            <button class="nav-btn" onclick="switchTab('assignments')">📝 Assignments</button>
+            <button class="nav-btn" onclick="switchTab('timetable')">📅 Timetable</button>
+            <button class="nav-btn" onclick="switchTab('attendance')">✅ Attendance</button>
+            <button class="nav-btn" onclick="switchTab('internal-marks')">📊 Internal Marks</button>
+        </nav>
+
+        <!-- ===== Overview Tab ===== -->
+        <div id="overview" class="tab-content active">
+            <div class="grid-4 stagger-children">
+                <div class="stat-card purple">
+                    <div class="stat-info">
+                        <h3 id="stat-total-students">60</h3>
+                        <p>Total Students</p>
+                    </div>
+                    <div class="stat-icon">👥</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-info">
+                        <h3 id="stat-active-assignments">3</h3>
+                        <p>Active Assignments</p>
+                    </div>
+                    <div class="stat-icon">📝</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-info">
+                        <h3 id="stat-avg-attendance">87%</h3>
+                        <p>Avg. Attendance</p>
+                    </div>
+                    <div class="stat-icon">📊</div>
+                </div>
+                <div class="stat-card cyan">
+                    <div class="stat-info">
+                        <h3 id="stat-announcements-count">4</h3>
+                        <p>Announcements</p>
+                    </div>
+                    <div class="stat-icon">📢</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Quick Actions</h2>
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action-btn"
+                        onclick="switchTab('announcements'); setTimeout(() => openModal('postAnnouncementModal'), 200);">
+                        <span class="quick-action-icon">📢</span>
+                        <span class="quick-action-text">Post Announcement</span>
+                    </div>
+                    <div class="quick-action-btn"
+                        onclick="switchTab('assignments'); setTimeout(() => openModal('createAssignmentModal'), 200);">
+                        <span class="quick-action-icon">✍️</span>
+                        <span class="quick-action-text">Create Assignment</span>
+                    </div>
+                    <div class="quick-action-btn"
+                        onclick="switchTab('timetable');">
+                        <span class="quick-action-icon">⏰</span>
+                        <span class="quick-action-text">Update Timetable</span>
+                    </div>
+                    <div class="quick-action-btn" onclick="switchTab('attendance')">
+                        <span class="quick-action-icon">✅</span>
+                        <span class="quick-action-text">Mark Attendance</span>
+                    </div>
+                    <div class="quick-action-btn" onclick="openModal('sendAlertModal')">
+                        <span class="quick-action-icon">📣</span>
+                        <span class="quick-action-text">Send Alert</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Activity</h2>
+                </div>
+                <div id="recent-activity">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Announcements Tab ===== -->
+        <div id="announcements" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Manage Announcements</h2>
+                    <button class="btn btn-primary" onclick="openModal('postAnnouncementModal')">+ Post New</button>
+                </div>
+                <div id="faculty-announcements">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Assignments Tab ===== -->
+        <div id="assignments" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Manage Assignments</h2>
+                    <button class="btn btn-primary" onclick="openModal('createAssignmentModal')">+ Create
+                        Assignment</button>
+                </div>
+                <div id="faculty-assignments">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Timetable Tab ===== -->
+        <div id="timetable" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Weekly Timetable</h2>
+                </div>
+                <div class="timetable" id="faculty-timetable">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Attendance Tab ===== -->
+        <div id="attendance" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Attendance Management</h2>
+                    <button class="btn btn-primary" id="mark-attendance-btn" onclick="toggleAttendanceMode()">📋 Mark
+                        Attendance</button>
+                </div>
+
+                <!-- Students below 75% attendance -->
+                <h3 style="margin-bottom: 14px; font-size: 1.05rem; color: var(--text-secondary);">⚠️ Students Below 75% Attendance</h3>
+                <div class="table-container">
+                    <table id="low-attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Roll No</th>
+                                <th>Student Name</th>
+                                <th>Overall %</th>
+                                <th>Critical Subject</th>
+                                <th>Alert</th>
+                            </tr>
+                        </thead>
+                        <tbody id="low-attendance-body">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Attendance marking section (hidden by default) -->
+                <div id="attendance-marking" style="display: none; margin-top: 28px;">
+                    <h3 style="margin-bottom: 14px; font-size: 1.15rem; color: var(--text-secondary);">Mark Today's
+                        Attendance</h3>
+                    <!-- Subject auto-filled from faculty profile -->
+                    <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                        <span style="color: var(--text-muted); font-size: 0.9rem;">Subject:</span>
+                        <span id="attendance-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 4px 14px; border-radius: 20px; font-size: 0.9rem;">—</span>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Roll No</th>
+                                    <th>Student Name</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-marking-body">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 16px; display: flex; gap: 10px;">
+                        <button class="btn btn-success" onclick="saveAttendance()">Save Attendance</button>
+                        <button class="btn btn-secondary" onclick="toggleAttendanceMode()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Internal Marks Tab ===== -->
+        <div id="internal-marks" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Internal Marks</h2>
+                    <button class="btn btn-success" id="save-marks-btn" onclick="saveInternalMarks()">💾 Save Marks</button>
+                </div>
+
+                <!-- Auto subject + hint -->
+                <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">Subject:</span>
+                    <span id="marks-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 4px 14px; border-radius: 20px; font-size: 0.9rem;">—</span>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px;">
+                    CT-1 &amp; CT-2 — enter marks obtained. Assignment &amp; Attendance — out of 5.
+                </p>
+
+                <!-- Marks Table -->
+                <div class="table-container" id="marks-table-container" style="display:none;">
+                    <table id="marks-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:130px;">Roll No.</th>
+                                <th>Name</th>
+                                <th style="min-width:90px;">CT-1</th>
+                                <th style="min-width:90px;">CT-2</th>
+                                <th style="min-width:100px;">Assignment<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                                <th style="min-width:100px;">Attendance<br><small style="font-weight:400;opacity:.7;">(out of 5)</small></th>
+                            </tr>
+                        </thead>
+                        <tbody id="marks-table-body">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state —- overridden when table has data -->
+                <div id="marks-empty" style="text-align:center; padding: 40px; color: var(--text-muted);">
+                    <div style="font-size:3rem; margin-bottom:12px;">⏳</div>
+                    <p>Loading marks…</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Announcement Modal -->
+    <div id="postAnnouncementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Post Announcement</h2>
+                <button class="close-modal" onclick="closeModal('postAnnouncementModal')">&times;</button>
+            </div>
+            <form onsubmit="postAnnouncement(event)">
+                <div class="form-group">
+                    <label for="ann-title">Title *</label>
+                    <input type="text" class="form-control" id="ann-title" placeholder="e.g., Class Cancelled Tomorrow"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="ann-message">Message *</label>
+                    <textarea class="form-control" id="ann-message" placeholder="Enter announcement details..."
+                        required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ann-priority">Priority</label>
+                    <select class="form-control" id="ann-priority">
+                        <option value="normal">Normal</option>
+                        <option value="important">Important</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ann-audience">Target Audience</label>
+                    <select class="form-control" id="ann-audience">
+                        <option value="all">All Students</option>
+                        <option value="cse">CSE Department</option>
+                        <option value="specific">Specific Section</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">Post Announcement</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('postAnnouncementModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Assignment Modal -->
+    <div id="createAssignmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create Assignment</h2>
+                <button class="close-modal" onclick="closeModal('createAssignmentModal')">&times;</button>
+            </div>
+            <form onsubmit="createAssignment(event)">
+                <div class="form-group">
+                    <label for="asg-title">Assignment Title *</label>
+                    <input type="text" class="form-control" id="asg-title"
+                        placeholder="e.g., Binary Search Tree Implementation" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                        <span id="asg-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 6px 16px; border-radius: 20px;">—</span>
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Auto-filled from your profile</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="asg-description">Description *</label>
+                    <textarea class="form-control" id="asg-description"
+                        placeholder="Assignment details and requirements..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="asg-due">Due Date *</label>
+                    <input type="date" class="form-control" id="asg-due" required>
+                </div>
+                <div class="form-group">
+                    <label for="asg-marks">Total Marks</label>
+                    <input type="number" class="form-control" id="asg-marks" placeholder="e.g., 100" min="0">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">Create Assignment</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createAssignmentModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Timetable Modal -->
+    <div id="editTimetableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Timetable Entry</h2>
+                <button class="close-modal" onclick="closeModal('editTimetableModal')">&times;</button>
+            </div>
+            <form onsubmit="updateTimetable(event)">
+                <div class="form-group">
+                    <label for="tt-day">Day *</label>
+                    <select class="form-control" id="tt-day" required>
+                        <option value="">Choose Day</option>
+                        <option>Monday</option>
+                        <option>Tuesday</option>
+                        <option>Wednesday</option>
+                        <option>Thursday</option>
+                        <option>Friday</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tt-time">Time Slot *</label>
+                    <select class="form-control" id="tt-time" required>
+                        <option value="">Select Time</option>
+                        <option>09:00 - 09:50</option>
+                        <option>10:00 - 10:50</option>
+                        <option>11:00 - 11:50</option>
+                        <option>12:00 - 12:50</option>
+                        <option>01:40 - 03:30</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                        <span id="tt-subject-label" style="font-weight: 600; color: var(--accent-purple); background: rgba(99,102,241,0.12); padding: 6px 16px; border-radius: 20px;">—</span>
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">Auto-filled from your profile</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tt-faculty">Faculty Name *</label>
+                    <input type="text" class="form-control" id="tt-faculty" placeholder="e.g., Dr. Priya Singh"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="tt-room">Room/Lab *</label>
+                    <input type="text" class="form-control" id="tt-room" placeholder="e.g., Room 301 or Lab 1" required>
+                </div>
+                <div class="form-group">
+                    <label for="tt-reason">Reason for Change</label>
+                    <textarea class="form-control" id="tt-reason"
+                        placeholder="Optional: explain why timing is being updated"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">Update Schedule</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editTimetableModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Custom Alert Modal -->
+    <div id="sendAlertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📣 Send Alert to All Students</h2>
+                <button class="close-modal" onclick="closeModal('sendAlertModal')">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                This will send an email notification to <strong id="alert-modal-count"
+                    style="color: var(--accent-purple);">all</strong> registered students instantly.
+            </p>
+            <form onsubmit="sendCustomAlert(event)">
+                <div class="form-group">
+                    <label for="alert-type">Alert Type</label>
+                    <select class="form-control" id="alert-type">
+                        <option value="general">🔔 General Notice</option>
+                        <option value="exam">📋 Exam / Test Notice</option>
+                        <option value="holiday">🎉 Holiday / No Class</option>
+                        <option value="low_attendance">⚠️ Attendance Warning</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alert-title">Alert Title *</label>
+                    <input type="text" class="form-control" id="alert-title" placeholder="e.g., Internal Exam Schedule"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="alert-message">Message *</label>
+                    <textarea class="form-control" id="alert-message" rows="4"
+                        placeholder="Write the full message that students will receive in their email..."
+                        required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">📧 Send to All Students</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('sendAlertModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grade Submission Modal -->
+    <div id="gradeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Grade Submissions</h2>
+                <button class="close-modal" onclick="closeModal('gradeModal')">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 16px;" id="grade-assignment-label"></p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Student</th>
+                            <th>Submission</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grade-submissions-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 16px;">
+                <button class="btn btn-success" onclick="saveGrades()">Save Grades</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/faculty.js"></script>
+</body>
+
+</html>
