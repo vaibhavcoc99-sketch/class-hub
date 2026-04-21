@@ -128,6 +128,38 @@ transporter.verify()
 // ---- Routes ----
 
 // POST /api/auth/send-otp
+app.get('/api/seed', async (req, res) => {
+    try {
+        const facultyEmail = 'dipanshu@ietlucknow.ac.in';
+        const existingFaculty = await User.findOne({ email: facultyEmail });
+        if (!existingFaculty) {
+            await User.create({
+                name: 'Dipanshu Singh',
+                email: facultyEmail,
+                password: 'password123',
+                role: 'faculty',
+                department: 'Operating System',
+                subjects: ['Operating System', 'Operating System Lab']
+            });
+        }
+
+        const studentEmail = '2400520100071@ietlucknow.ac.in';
+        const existingStudent = await User.findOne({ email: studentEmail });
+        if (!existingStudent) {
+            await User.create({
+                name: 'VAIBHAV AGARWAL',
+                email: studentEmail,
+                password: 'password123',
+                role: 'student',
+                rollNo: '2400520100071'
+            });
+        }
+        res.json({ success: true, message: 'Seeded successfully! Faculty: dipanshu@ietlucknow.ac.in, Student: 2400520100071@ietlucknow.ac.in. Password is password123 for both' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/auth/send-otp', async (req, res) => {
     const { email } = req.body;
 
