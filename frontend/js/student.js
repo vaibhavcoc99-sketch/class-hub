@@ -29,7 +29,7 @@ function logout() {
 let announcements = []; // fetched from MongoDB
 
 let assignments = []; // dynamically fetched from MongoDB
-const API_BASE = 'http://localhost:5001';
+const API_BASE = window.location.origin;
 
 let timetableData = {}; // fetched from MongoDB
 

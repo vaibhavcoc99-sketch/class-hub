@@ -1,7 +1,7 @@
 /* ===== ClassHub Auth Module ===== */
 
 // ---- Config ----
-const API_BASE = 'http://localhost:5001';
+const API_BASE = window.location.origin;
 
 // ---- State ----
 let authMode = 'login';
