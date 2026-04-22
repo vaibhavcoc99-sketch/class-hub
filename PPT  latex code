@@ -1,0 +1,273 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{array}
+\usepackage{booktabs}
+
+% Define colors inspired by StudyMate
+\definecolor{StudyMateBlue}{RGB}{41, 128, 185}
+\definecolor{DarkBlue}{RGB}{25, 75, 120}
+\definecolor{AccentGreen}{RGB}{46, 204, 113}
+
+% Beamer configuration
+\usetheme{default}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{frametitle}{bg=StudyMateBlue, fg=white}
+\setbeamercolor{structure}{fg=StudyMateBlue}
+\setbeamercolor{alerted text}{fg=AccentGreen}
+\setbeamercolor{itemize item}{fg=StudyMateBlue}
+
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+
+\beamertemplatenavigationsymbolsempty
+
+\setbeamertemplate{frametitle}{
+    \begin{beamercolorbox}[ht=2.5em,wd=\paperwidth]{frametitle}
+        \vspace{0.3em}
+        \hspace{1em}\insertframetitle\hspace{1em}
+        \vspace{0.2em}
+    \end{beamercolorbox}
+}
+
+\setbeamertemplate{title page}{
+    \begin{tikzpicture}[remember picture, overlay]
+        \fill[StudyMateBlue] (current page.south west) rectangle (current page.north east);
+    \end{tikzpicture}
+    
+    \vspace{2cm}
+    \begin{center}
+        \textcolor{white}{\usebeamerfont{title}\inserttitle}
+        \vspace{0.5cm}
+        \textcolor{white}{\usebeamerfont{subtitle}\insertsubtitle}
+        \vspace{2cm}
+        \textcolor{white}{\insertauthor}
+        \vspace{1cm}
+        \textcolor{AccentGreen}{\textbf{Live Demo: http://16.171.176.40:5001/}}
+    \end{center}
+}
+
+\title{ClassHub}
+\subtitle{Smart Classroom Management System\\Eliminating WhatsApp Chaos in Academic Communication}
+
+% Corrected author order: Prateek Goel is now after Malay Varshney
+\author{Vaibhav Agarwal, Priyanshu, Malay Varshney, Prateek Goel}
+\date{}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}[t]
+\frametitle{Problem Statement}
+\vspace{0.5cm}
+\begin{itemize}
+    \itemsep1em
+    \item Unorganized communication via WhatsApp
+    \item Important updates get lost
+    \item No proper system for: Attendance, Assignments, Timetable, Internal marks
+    \item Lack of structured student-faculty interaction
+\end{itemize}
+\vspace{1cm}
+\textcolor{StudyMateBlue}{\hrule}
+\small\textit{Result: Chaotic, inefficient academic communication}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Solution -- ClassHub}
+\vspace{0.5cm}
+\textbf{\Large A centralized platform providing:}
+\vspace{0.8cm}
+\begin{itemize}
+    \itemsep0.9em
+    \item Organized announcements
+    \item Assignment management
+    \item Live timetable
+    \item Attendance tracking
+    \item Internal marks management
+    \item Performance analytics
+\end{itemize}
+\vspace{1cm}
+\begin{center}
+\textbf{\textcolor{StudyMateBlue}{One platform for complete academic control}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Student Features}
+\vspace{0.5cm}
+\begin{columns}
+    \column{0.5\textwidth}
+    \begin{itemize}
+        \itemsep1em
+        \item Attendance tracking
+        \item Live timetable
+        \item Assignment submission
+    \end{itemize}
+    
+    \column{0.5\textwidth}
+    \begin{itemize}
+        \itemsep1em
+        \item View marks and performance
+        \item Notifications and alerts
+        \item Email updates
+    \end{itemize}
+\end{columns}
+\vspace{1.5cm}
+\begin{center}
+\textcolor{StudyMateBlue}{\textbf{Complete academic visibility for students}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Faculty Features}
+\vspace{0.5cm}
+\begin{itemize}
+    \itemsep1.2em
+    \item Digital attendance marking
+    \item Broadcast announcements
+    \item Low attendance alerts
+    \item Assignment management
+    \item Upload and manage internal marks
+\end{itemize}
+\vspace{2cm}
+\begin{center}
+\textcolor{StudyMateBlue}{\textbf{Better control + full transparency}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Comparison with Existing Systems}
+\vspace{0.5cm}
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Feature} & \textbf{WhatsApp} & \textbf{Google Classroom} & \textbf{ClassHub} \\
+\hline
+Organized Updates & \textcolor{red}{X} & \textcolor{AccentGreen}{O} & \textcolor{AccentGreen}{O} \\
+\hline
+Attendance & \textcolor{red}{X} & \textcolor{red}{X} & \textcolor{AccentGreen}{O} \\
+\hline
+Timetable & \textcolor{red}{X} & \textcolor{red}{X} & \textcolor{AccentGreen}{O} \\
+\hline
+Assignments & \textcolor{red}{X} & \textcolor{AccentGreen}{O} & \textcolor{AccentGreen}{O} \\
+\hline
+Internal Marks & \textcolor{red}{X} & \textcolor{red}{X} & \textcolor{AccentGreen}{O} \\
+\hline
+\end{tabular}
+\end{center}
+\vspace{1.5cm}
+\begin{center}
+\textcolor{StudyMateBlue}{\textbf{ClassHub = Complete academic system}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Design Inspiration: StudyMate}
+\vspace{0.8cm}
+\textbf{\Large Inspired by structured platforms like StudyMate}
+\vspace{1cm}
+\begin{itemize}
+    \itemsep1em
+    \item Role-based dashboards
+    \item Clean, intuitive UI
+    \item Feature-specific modules
+    \item Problem-focused design
+\end{itemize}
+\vspace{1.5cm}
+\begin{center}
+\textcolor{StudyMateBlue}{\textbf{Leveraging proven platform patterns}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Technologies Used}
+\vspace{0.5cm}
+\begin{columns}
+    \column{0.5\textwidth}
+    \textbf{\textcolor{StudyMateBlue}{Frontend}}
+    \begin{itemize}
+        \item HTML5
+        \item CSS3
+        \item JavaScript
+    \end{itemize}
+    \vspace{0.8em}
+    \textbf{\textcolor{StudyMateBlue}{Backend}}
+    \begin{itemize}
+        \item Node.js
+        \item Express.js
+    \end{itemize}
+    
+    \column{0.5\textwidth}
+    \textbf{\textcolor{StudyMateBlue}{Database}}
+    \begin{itemize}
+        \item MongoDB
+    \end{itemize}
+    \vspace{0.8em}
+    \textbf{\textcolor{StudyMateBlue}{Security}}
+    \begin{itemize}
+        \item JWT, Bcrypt
+        \item Nodemailer, Multer
+    \end{itemize}
+\end{columns}
+\vspace{1.5cm}
+\begin{center}
+\textcolor{StudyMateBlue}{\textbf{Modern stack for scalability and reliability}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Project Status and Deployment}
+\vspace{1.2cm}
+\begin{center}
+\Large\textcolor{AccentGreen}{\textbf{Fully Completed}}
+\end{center}
+\vspace{1cm}
+\begin{itemize}
+    \itemsep1em
+    \item All features implemented
+    \item Hosted on AWS
+    \item Real-time working system
+\end{itemize}
+\vspace{1.3cm}
+\begin{center}
+\textbf{\Large Live: \textcolor{StudyMateBlue}{http://16.171.176.40:5001/}}
+\end{center}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{Conclusion}
+\vspace{0.8cm}
+\begin{itemize}
+    \itemsep1.2em
+    \item Eliminates WhatsApp chaos
+    \item Centralizes academic management
+    \item Improves transparency
+    \item Secure and scalable
+    \item User-friendly interface
+\end{itemize}
+\vspace{2cm}
+\begin{center}
+\Large\textbf{\textcolor{StudyMateBlue}{One Platform for Complete Academic Management}}
+\end{center}
+\end{frame}
+
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture, overlay]
+    \fill[StudyMateBlue] (current page.south west) rectangle (current page.north east);
+\end{tikzpicture}
+\begin{center}
+    \vspace{2.5cm}
+    \textcolor{white}{\Huge\textbf{Thank You!}}
+    \vspace{1.5cm}
+    \textcolor{white}{\Large Questions?}
+    \vspace{2cm}
+    \textcolor{AccentGreen}{\textbf{Visit: http://16.171.176.40:5001/}}
+\end{center}
+\end{frame}
+
+\end{document}
