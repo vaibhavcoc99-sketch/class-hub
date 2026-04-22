@@ -91,8 +91,9 @@ If you wish to run this project locally:
 4. **Run the application:**
    npm start
    The server will start on http://localhost:5001.
+---
+## 🔮 Future Enhancements
 
-##🔮 Future Enhancements
 * **🤖 AI Grading Agent:** Integration of an AI agent utilizing computer vision to automatically extract and map marks from uploaded     physical grading sheets (like CT papers) directly into the database.
 
 * **💬 Dedicated Messaging Hub:** A built-in, one-on-one communication section using real-time WebSockets (Socket.io) for seamless student-teacher interaction.  
@@ -100,8 +101,8 @@ If you wish to run this project locally:
 * **📱 Progressive Web App (PWA):** Transitioning the portal into a PWA or dedicated React Native mobile app for cross-platform accessibility.
 
 * **📊 Predictive Analytics:** Advanced tracking to automatically flag at-risk students based on historical attendance drops and missed submissions.
-
-##👥 Team Members
+---
+## 👥 Team Members
 This project was built and developed by:
 
 **VAIBHAV AGARWAL** (2400520100071)
@@ -114,6 +115,6 @@ Prateek Goel (2400520100056)
 
 Developed as a Mini Project by students of the Department of Computer Science and Engineering, **Institute of Engineering and Technology, Lucknow**.
 
-
+---
 ## 📄 License
 This project is officially licensed under the **MIT License**. Check the [LICENSE](LICENSE) file for more information.
