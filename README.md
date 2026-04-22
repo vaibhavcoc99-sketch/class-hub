@@ -1,85 +1,119 @@
-# 🎓 ClassHub
+# 🎓 ClassHub:Smart Classroom Management System
 
-**ClassHub** is a comprehensive classroom management platform designed to eliminate the chaos of WhatsApp groups. It seamlessly centralizes interaction between students and faculty by combining announcements, assignments, live timetables, and real-time attendance analytics securely into one modern portal.
+ClassHub is a centralized, modernized web application designed to eliminate the unstructured chaos of traditional classroom communication (like WhatsApp groups). It provides a secure, interactive platform that bridges the gap between students and faculty through robust, dedicated dashboards.
+
+🌐 **Live Demo:** [Hosted on AWS EC2](http://16.171.176.40:5001/)
 
 ---
 
-## ✨ Features
+## 📝 How to Sign Up (Testing the Live Demo)
 
-### For Students:
-- **Instant Announcements:** View priority announcements exactly when faculty push them (via dashboard & email).
-- **Assignment Submission:** Track deadlines and effortlessly upload files securely for grading.
-- **Attendance Analytics:** Keep an eye on your subject-wise attendance thresholds visually right on the dashboard.
-- **Live Timetable:** Always know exactly which class is next, including room numbers and last-minute suspension notifications.
+The platform utilizes strict role-based routing and email OTP validation. To test the application, follow these steps to create your account:
 
-### For Faculty:
-- **Class Broadcasting:** Push real-time announcements with custom priority labels that hit student inboxes and dashboards simultaneously.
-- **Assignment Management:** Distribute material and conveniently retrieve student PDF/link submissions.
-- **Daily Attendance Marking:** Quickly record student attendance and natively dispatch low-attendance warning emails.
-- **Secure Registration:** A built-in "Protective Key" restricts unauthenticated faculty from creating illicit profiles.
+### 👨‍🎓 For Students
+1. Navigate to the **Sign Up** page on the live demo.
+2. Select **Student** as your role.
+3. **Email Requirement:** Enter a valid college/university email address (the system validates specific domains ending with `@`).
+4. Solve the dynamic Canvas CAPTCHA challenge.
+5. Click Sign Up. The system will dispatch a secure OTP to your provided email address.
+6. Check your inbox, enter the OTP to verify your identity, and access the Student Dashboard.
+
+### 👨‍🏫 For Faculty
+1. Navigate to the **Sign Up** page.
+2. Select **Faculty** as your role.
+3. Enter your details, select your **Subject Taught**, and input the mandatory **Faculty Authorization Key**: `Classhub@faculty` *(Without this protective key, faculty registration will be blocked).*
+4. **Validation:** The system checks your credentials and the authorization key to prevent unauthorized access to instructor privileges.
+5. Solve the dynamic Canvas CAPTCHA challenge.
+6. Once validated, check your email for the OTP, verify your account, and access the Faculty Dashboard to start managing classes.
+
+---
+
+## ✨ Key Features
+
+### 👨‍🎓 For Students (The Learner's Hub)
+* **Track Attendance Analytics:** Visually monitor daily, subject-wise attendance thresholds (e.g., the 75% criteria) with dynamic charts to avoid exam restrictions.
+* **Access Live Timetables:** See real-time schedules, room allocations, and instantly check if a class has been suspended.
+* **Manage Assignments:** Track deadlines and seamlessly upload assignment submissions (PDFs or links) to an organized digital locker.
+* **Stay Informed:** Receive high-priority notifications and broadcast announcements directly on the dashboard and via native email alerts.
+
+### 👨‍🏫 For Faculty (The Instructor's Hub)
+* **Mark Digital Attendance:** Effortlessly submit daily logs that instantly sync to student metrics. Includes a "Low Attendance Alert" tool that automatically emails struggling students.
+* **Grade Internal Marks:** A dedicated interface to evaluate, record, and manage comprehensive internal assessments, allowing seamless entry of Class Tests (CTs), attendance marks, and assignment scores.
+* **Broadcast Announcements:** Publish notices with urgency tags (🚨) and trigger widespread email alerts to the entire class roster with one click.
+* **Broadcast Announcements:** Publish notices with urgency tags (🚨) and trigger widespread email alerts to the entire class roster with one click.
+* **Control the Schedule:** Suspend classes directly from the live timetable, automatically cascading notification emails to students.
+* **Manage Submissions:** Remotely deploy assignments, collect digital submissions cleanly to a local server folder, and easily log internal marks.
 
 ---
 
 ## 🛠️ Technology Stack
 
-This application emphasizes performance and simplicity by avoiding heavy UI frameworks and adopting a streamlined JS architecture:
+ClassHub is built on an optimized, lightweight MERN-like ecosystem to ensure low overhead and fast routing:
 
-**Frontend**
-*   Vanilla **HTML5 / CSS3** (No Tailwind/Bootstrap — 100% custom styling variables)
-*   Vanilla **JavaScript** (ES6+) for DOM manipulation, Auth UI handling, and REST fetching
-*   **HTML Canvas API** for custom built-in signup CAPTCHA
+**🎨 Frontend (Client-Side)**
+* **Vanilla HTML5 & CSS3:** Custom variables, flexbox, and animations without heavy frameworks.
+* **Vanilla JavaScript (ES6+):** Client-side routing, API fetching, and dynamic DOM manipulation.
+* **HTML Canvas API:** Dynamically drawn CAPTCHA challenges during sign-up for bot prevention.
 
-**Backend**
-*   **Node.js & Express.js**
-*   **MongoDB & Mongoose** (ODM models and pre-save `bcrypt` hash hooks)
-*   **JSON Web Tokens (JWT)** for robust state authorization
-*   **Nodemailer** for fully integrated SMTP operations (OTP verifications, broadcasts, attendance alerts)
-*   **Multer** for localized file processing
+**⚙️ Backend (Server-Side)**
+* **Node.js & Express.js:** Powerful RESTful API routing architecture (`/api/auth`, `/api/attendance`, etc.).
 
----
+**🗄️ Database**
+* **MongoDB:** Independent NoSQL document database.
+* **Mongoose (ODM):** Strict schema structuring and document mapping.
 
-## 🚀 Running Locally
-
-Follow these instructions to safely deploy ClassHub to your local development environment.
-
-### 1. Prerequisites
-- [Node.js](https://nodejs.org) (v14 or higher)
-- [MongoDB](https://www.mongodb.com/) (Local or Atlas URI)
-
-### 2. Installation Setup
-Clone the GitHub repository and install the backend modules:
-```bash
-git clone https://github.com/vaibhavcoc99-sketch/class-hub.git
-cd class-hub/backend
-npm install
-```
-
-### 3. Environment Config (`.env`)
-Inside the `backend/` folder, create a `.env` file with the following variables:
-```env
-PORT=5001
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/classhub
-JWT_SECRET=your_super_secret_jwt_key
-EMAIL_USER=your_verified_gmail@gmail.com
-EMAIL_PASS=your_google_app_password
-```
-
-### 4. Boot up Server
-Start the Express server:
-```bash
-npm start
-# or node server.js
-```
-
-### 5. Access the Frontend
-Since the Express application binds the `frontend` folder statically, you can safely navigate to:
-```
-http://localhost:5001/
-```
-
-**Security Note:** When registering an account through the frontend as *Faculty*, you will be prompted for an internal protective key. The default demo key is configured natively as: `Classhub@faculty`
+**🛡️ Security & Integrations**
+* **JSON Web Tokens (JWT):** Secure, stateless local storage authentication.
+* **BcryptJS:** Hashing algorithms for secure password storage.
+* **Nodemailer:** Automated SMTP integrations for OTPs, alerts, and password recovery.
+* **Multer:** Middleware for handling `multipart/form-data` and localized server file storage.
+* **AWS EC2:** Cloud hosting for scalable and reliable deployment.
 
 ---
+
+## 🚀 Installation & Local Setup
+
+If you wish to run this project locally:
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/your-username/classhub.git](https://github.com/your-username/classhub.git)
+   cd classhub
+2. **Install dependencies:**
+   npm install
+3. **Set up environment variables:
+   Create a .env file in the root directory and add the following:**
+   PORT=5001
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_super_secret_jwt_key
+   EMAIL_USER=your_smtp_email@gmail.com
+   EMAIL_PASS=your_smtp_app_password
+4. **Run the application:**
+   npm start
+   The server will start on http://localhost:5001.
+
+##**🔮 Future Enhancements**
+**🤖 AI Grading Agent:** Integration of an AI agent utilizing computer vision to automatically extract and map marks from uploaded physical grading sheets (like CT papers) directly into the database.
+
+**💬 Dedicated Messaging Hub:** A built-in, one-on-one communication section using real-time WebSockets (Socket.io) for seamless student-teacher interaction.
+
+**📱 Progressive Web App (PWA):** Transitioning the portal into a PWA or dedicated React Native mobile app for cross-platform accessibility.
+
+**📊 Predictive Analytics:** Advanced tracking to automatically flag at-risk students based on historical attendance drops and missed submissions.
+
+##**👥 Team Members**
+This project was built and developed by:
+
+**VAIBHAV AGARWAL** (2400520100071)
+
+Priyanshu (2400502100058)
+
+MALAY VARSHNEY (2400520100049)
+
+Prateek Goel (2400520100056)
+
+Developed as a Mini Project by students of the Department of Computer Science and Engineering, **Institute of Engineering and Technology, Lucknow**.
+
 
 ## 📄 License
 This project is officially licensed under the **MIT License**. Check the [LICENSE](LICENSE) file for more information.
