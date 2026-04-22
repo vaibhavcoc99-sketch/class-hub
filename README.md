@@ -92,16 +92,16 @@ If you wish to run this project locally:
    npm start
    The server will start on http://localhost:5001.
 
-##**🔮 Future Enhancements**
-**🤖 AI Grading Agent:** Integration of an AI agent utilizing computer vision to automatically extract and map marks from uploaded physical grading sheets (like CT papers) directly into the database.
+##🔮 Future Enhancements
+* **🤖 AI Grading Agent:** Integration of an AI agent utilizing computer vision to automatically extract and map marks from uploaded     physical grading sheets (like CT papers) directly into the database.
 
-**💬 Dedicated Messaging Hub:** A built-in, one-on-one communication section using real-time WebSockets (Socket.io) for seamless student-teacher interaction.
+* **💬 Dedicated Messaging Hub:** A built-in, one-on-one communication section using real-time WebSockets (Socket.io) for seamless student-teacher interaction.  
 
-**📱 Progressive Web App (PWA):** Transitioning the portal into a PWA or dedicated React Native mobile app for cross-platform accessibility.
+* **📱 Progressive Web App (PWA):** Transitioning the portal into a PWA or dedicated React Native mobile app for cross-platform accessibility.
 
-**📊 Predictive Analytics:** Advanced tracking to automatically flag at-risk students based on historical attendance drops and missed submissions.
+* **📊 Predictive Analytics:** Advanced tracking to automatically flag at-risk students based on historical attendance drops and missed submissions.
 
-##**👥 Team Members**
+##👥 Team Members
 This project was built and developed by:
 
 **VAIBHAV AGARWAL** (2400520100071)
