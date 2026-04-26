@@ -1,4 +1,4 @@
-# 🎓 ClassHub:Smart Classroom Management System
+ji# 🎓 ClassHub:Smart Classroom Management System
 
 ClassHub is a centralized, modernized web application designed to eliminate the unstructured chaos of traditional classroom communication (like WhatsApp groups). It provides a secure, interactive platform that bridges the gap between students and faculty through robust, dedicated dashboards.
 
@@ -105,11 +105,13 @@ If you wish to run this project locally:
 ## 👥 Team Members
 This project was built and developed by:
 
-**VAIBHAV AGARWAL** (2400520100071) priyanshu (2400502100058)
+**VAIBHAV AGARWAL** (2400520100071) 
+
+priyanshu (2400502100058)
 
 Malay Varshney (2400520100049)
 
-Prateek Goel (2400520100056)
+Prateek Goyal (2400520100056)
 
 Developed as a Mini Project by students of the Department of Computer Science and Engineering, **Institute of Engineering and Technology, Lucknow**.
 
