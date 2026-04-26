@@ -109,7 +109,7 @@ This project was built and developed by:
 
 Priyanshu (2400502100058)
 
-MALAY VARSHNEY (2400520100049)
+Malay Varshney (2400520100049)
 
 Prateek Goel (2400520100056)
 
