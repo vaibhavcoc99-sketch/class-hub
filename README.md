@@ -85,11 +85,11 @@ If you wish to run this project locally:
    Create a .env file in the root directory and add the following:**
    PORT=5001
    MONGO_URI=your_mongodb_connection_string
-   # Google OAuth2 Credentials for OTP Delivery
-EMAIL=your_authorized_gmail_address
-CLIENT_ID=your_google_cloud_client_id
-CLIENT_SECRET=your_google_cloud_client_secret
-REFRESH_TOKEN=your_oauth_refresh_token
+  ** # Google OAuth2 Credentials for OTP Delivery
+    EMAIL=your_authorized_gmail_address
+    CLIENT_ID=your_google_cloud_client_id
+    CLIENT_SECRET=your_google_cloud_client_secret
+    REFRESH_TOKEN=your_oauth_refresh_token
 4. **Run the application:**
    npm start
    The server will start on http://localhost:5001.
