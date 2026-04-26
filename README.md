@@ -105,9 +105,7 @@ If you wish to run this project locally:
 ## 👥 Team Members
 This project was built and developed by:
 
-**VAIBHAV AGARWAL** (2400520100071)
-
-Priyanshu (2400502100058)
+**VAIBHAV AGARWAL** (2400520100071) priyanshu (2400502100058)
 
 Malay Varshney (2400520100049)
 
