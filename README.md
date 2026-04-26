@@ -65,7 +65,7 @@ ClassHub is built on an optimized, lightweight MERN-like ecosystem to ensure low
 **🛡️ Security & Integrations**
 * **JSON Web Tokens (JWT):** Secure, stateless local storage authentication.
 * **BcryptJS:** Hashing algorithms for secure password storage.
-* **Nodemailer:** Automated SMTP integrations for OTPs, alerts, and password recovery.
+* **Google OAuth 2.0 API & Nodemailer**: Secure, API-driven email delivery for OTPs, bypassing standard SMTP blocks.
 * **Multer:** Middleware for handling `multipart/form-data` and localized server file storage.
 * **AWS EC2:** Cloud hosting for scalable and reliable deployment.
 
@@ -85,9 +85,11 @@ If you wish to run this project locally:
    Create a .env file in the root directory and add the following:**
    PORT=5001
    MONGO_URI=your_mongodb_connection_string
-   JWT_SECRET=your_super_secret_jwt_key
-   EMAIL_USER=your_smtp_email@gmail.com
-   EMAIL_PASS=your_smtp_app_password
+   # Google OAuth2 Credentials for OTP Delivery
+EMAIL=your_authorized_gmail_address
+CLIENT_ID=your_google_cloud_client_id
+CLIENT_SECRET=your_google_cloud_client_secret
+REFRESH_TOKEN=your_oauth_refresh_token
 4. **Run the application:**
    npm start
    The server will start on http://localhost:5001.
