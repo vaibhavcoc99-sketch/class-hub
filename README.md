@@ -1,4 +1,4 @@
-ji# 🎓 ClassHub:Smart Classroom Management System
+# 🎓 ClassHub:Smart Classroom Management System
 
 ClassHub is a centralized, modernized web application designed to eliminate the unstructured chaos of traditional classroom communication (like WhatsApp groups). It provides a secure, interactive platform that bridges the gap between students and faculty through robust, dedicated dashboards.
 
