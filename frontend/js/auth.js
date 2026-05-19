@@ -1,7 +1,9 @@
 /* ===== ClassHub Auth Module ===== */
 
 // ---- Config ----
-const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' ? 'http://localhost:5001' : window.location.origin;
+const API_BASE = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+  ? 'http://localhost:5001'
+  : `${window.location.protocol}//${window.location.hostname}:5001`;
 
 // ---- State ----
 let authMode = 'login';
